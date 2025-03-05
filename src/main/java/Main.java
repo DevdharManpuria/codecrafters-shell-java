@@ -8,6 +8,10 @@ public class Main {
         System.out.println(input + ": command not found");
         System.out.print("$ ");
         input = scanner.nextLine();
-      } while (input !="exit");
+        if(input=="exit"){
+            System.out.println("exit 0");
+            break;
+        }
+      } while (true);
     }
   }
