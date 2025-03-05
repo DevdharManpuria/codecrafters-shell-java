@@ -25,13 +25,13 @@ public class Main {
           }
         }
       } else {
-        String command = input.split(" ")[0];
+        String[] parts = input.split(" ");
+        String command = parts[0];
         String path = getPath(command);
         if (path == null) {
           System.out.printf("%s: command not found%n", command);
         } else {
-          String fullPath = path + input.substring(command.length());
-          Process p = Runtime.getRuntime().exec(fullPath.split(" "));
+          Process p = new ProcessBuilder(parts).start();
           p.getInputStream().transferTo(System.out);
         }
       }
@@ -40,7 +40,7 @@ public class Main {
   private static String getPath(String command) {
     for (String path : System.getenv("PATH").split(":")) {
       Path fullPath = Path.of(path, command);
-      if (Files.isRegularFile(fullPath)) {
+      if (Files.isRegularFile(fullPath) && Files.isExecutable(fullPath)) {
         return fullPath.toString();
       }
     }
