@@ -9,7 +9,6 @@ public class Main {
         System.out.print("$ ");
         input = scanner.nextLine();
         if(input.equals("exit 0")){
-            System.out.println("exit 0");
             break;
         }
       } while (true);
