@@ -55,7 +55,7 @@ public class Main {
     }
   }
   private static String getPath(String parameter) {
-    for (String path : System.getenv("PATH").split(":")) {
+    for (String path : System.getenv("PATH").split(";")) {
       Path fullPath = Path.of(path, parameter);
       if (Files.isRegularFile(fullPath)) {
         return fullPath.toString();
