@@ -5,7 +5,6 @@ public class Main {
       Scanner scanner = new Scanner(System.in);
       String input = scanner.nextLine();
       do {
-        
         System.out.print("$ ");
         input = scanner.nextLine();
         if(input.equals("exit 0")){
