@@ -1,73 +1,49 @@
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
+import java.nio.file.*;
+import java.util.*;
 import java.util.Scanner;
 public class Main {
   public static void main(String[] args) throws Exception {
+    Set<String> commands = Set.of("echo", "exit", "type");
     Scanner scanner = new Scanner(System.in);
-    List<String> builtins = builtins();
     while (true) {
       System.out.print("$ ");
       String input = scanner.nextLine();
-      String[] str = input.split(" ");
-      String command = str[0];
-      String parameter = "";
-      if (str.length > 2) {
-        for (int i = 1; i < str.length; i++) {
-          if (i < str.length - 1) {
-            parameter += str[i] + " ";
+      if (input.equals("exit 0")) {
+        System.exit(0);
+      } else if (input.startsWith("echo ")) {
+        System.out.println(input.substring(5));
+      } else if (input.startsWith("type ")) {
+        String arg = input.substring(5);
+        if (commands.contains(arg)) {
+          System.out.printf("%s is a shell builtin%n", arg);
+        } else {
+          String path = getPath(arg);
+          if (path == null) {
+            System.out.printf("%s: not found%n", arg);
           } else {
-            parameter += str[i];
+            System.out.printf("%s is %s%n", arg, path);
           }
         }
-      } else if (str.length > 1) {
-        parameter = str[1];
-      }
-      switch (command) {
-      case "exit":
-        if (parameter.equals("0")) {
-          System.exit(0);
+      } else {
+        String command = input.split(" ")[0];
+        String path = getPath(command);
+        if (path == null) {
+          System.out.printf("%s: command not found%n", command);
         } else {
-          System.out.println(input + ": command not found");
+          String fullPath = path + input.substring(command.length());
+          Process p = Runtime.getRuntime().exec(fullPath.split(" "));
+          p.getInputStream().transferTo(System.out);
         }
-        break;
-      case "echo":
-        System.out.println(parameter);
-        break;
-      case "type":
-        if (parameter.equals(builtins.get(0)) ||
-            parameter.equals(builtins.get(1)) ||
-            parameter.equals(builtins.get(2))) {
-          System.out.println(parameter + " is a shell builtin");
-        } else {
-          String path = getPath(parameter);
-          if (path != null) {
-            System.out.println(parameter + " is " + path);
-          } else {
-            System.out.println(parameter + ": not found");
-          }
-        }
-        break;
-      default:
-        System.out.println(input + ": command not found");
       }
     }
   }
-  private static String getPath(String parameter) {
+  private static String getPath(String command) {
     for (String path : System.getenv("PATH").split(":")) {
-      Path fullPath = Path.of(path, parameter);
+      Path fullPath = Path.of(path, command);
       if (Files.isRegularFile(fullPath)) {
         return fullPath.toString();
       }
     }
     return null;
-  }
-  private static List<String> builtins() {
-    List<String> builtins = new ArrayList<>();
-    builtins.add("exit");
-    builtins.add("echo");
-    builtins.add("type");
-    return builtins;
   }
 }
