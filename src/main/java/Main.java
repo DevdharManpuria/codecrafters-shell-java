@@ -3,7 +3,7 @@ import java.util.*;
 import java.util.Scanner;
 public class Main {
   public static void main(String[] args) throws Exception {
-    Set<String> commands = Set.of("echo", "exit", "type");
+    Set<String> commands = Set.of("echo", "exit", "type", "pwd");
     Scanner scanner = new Scanner(System.in);
     while (true) {
       System.out.print("$ ");
