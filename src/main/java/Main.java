@@ -74,12 +74,16 @@ public class Main {
         sc.close();
     }
     private static String getPath(String command) {
-        for (String path : System.getenv("PATH").split(":")) {
-            Path fullPath = Path.of(path, command);
-            if (Files.isRegularFile(fullPath) && Files.isExecutable(fullPath)) {
-                return fullPath.toString();
-            }
-        }
-        return null;
-    }
+      Path cmdPath = Path.of(command);
+      if ((cmdPath.isAbsolute() || command.contains("/")) && Files.isRegularFile(cmdPath) && Files.isExecutable(cmdPath)) {
+          return cmdPath.toString();
+      }
+      for (String path : System.getenv("PATH").split(":")) {
+          Path fullPath = Path.of(path, command);
+          if (Files.isRegularFile(fullPath) && Files.isExecutable(fullPath)) {
+              return fullPath.toString();
+          }
+      }
+      return null;
+  }
 }
