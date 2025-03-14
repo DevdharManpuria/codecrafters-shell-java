@@ -59,7 +59,7 @@ public class Main {
                     }
                     break;
                 case "echo":
-                    System.out.println(input.substring(5).replaceAll("^'|'$", "").replace("''", ""));
+                    System.out.println(arg);
                     break;
                 case "type":
                     if (commands.contains(arg)) {
