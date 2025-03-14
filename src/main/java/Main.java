@@ -22,7 +22,7 @@ public class Main {
                     }
                     break;
                 case "echo":
-                    System.out.println(arg.replaceAll("^'(.*)'$", "$1"));
+                    System.out.println(arg.replaceAll("^'(.*)'$", "$1").replaceAll("\\s+", " "));
                     break;
                 case "type":
                     if (commands.contains(arg)) {
