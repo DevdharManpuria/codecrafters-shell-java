@@ -171,7 +171,7 @@ public class Main {
       }
       for (String path : System.getenv("PATH").split(":")) {
           Path fullPath = Path.of(path, command);
-          if (Files.isRegularFile(fullPath) && Files.isExecutable(fullPath)) {
+          if (Files.exists(fullPath) && Files.isExecutable(fullPath)) {
               return fullPath.toString();
           }
       }
