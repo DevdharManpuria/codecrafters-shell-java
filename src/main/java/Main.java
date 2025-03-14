@@ -42,14 +42,18 @@ public class Main {
                 case "cd":
                     if (!arg.isEmpty()) { 
                       Path newPath;
+                      String homeDir = System.getenv("HOME");
+                      if (homeDir == null) {
+                        homeDir = System.getProperty("user.home");
+                      }
                       if (arg.startsWith("/")) {
                         newPath = Path.of(arg);
                       }
                       else if (arg.equals("~")) {
-                        newPath = Path.of(System.getProperty("user.home"));
+                        newPath = Path.of(homeDir);
                       } 
                       else if (arg.startsWith("~/")) {
-                        newPath = Path.of(System.getProperty("user.home"), arg.substring(2));
+                        newPath = Path.of(homeDir, arg.substring(2));
                       }
                       else {
                         newPath = currentDir.resolve(arg).normalize();
