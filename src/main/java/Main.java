@@ -22,7 +22,7 @@ public class Main {
                     }
                     break;
                 case "echo":
-                    System.out.println(arg);
+                    System.out.println(arg.replaceAll("^'(.*)'$", "$1"));
                     break;
                 case "type":
                     if (commands.contains(arg)) {
@@ -75,6 +75,9 @@ public class Main {
                     if (path == null) {
                         System.out.printf("%s: command not found%n", cmd);
                     } else {
+                        for (int i = 0; i < parts.length; i++) {
+                            parts[i] = parts[i].replaceAll("^'(.*)'$", "$1");
+                        }
                         Process p = new ProcessBuilder(parts).start();
                         p.getInputStream().transferTo(System.out);
                     }
