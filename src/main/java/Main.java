@@ -45,6 +45,12 @@ public class Main {
                       if (arg.startsWith("/")) {
                         newPath = Path.of(arg);
                       }
+                      else if (arg.equals("~")) {
+                        newPath = Path.of(System.getProperty("user.home"));
+                      } 
+                      else if (arg.startsWith("~/")) {
+                        newPath = Path.of(System.getProperty("user.home"), arg.substring(2));
+                      }
                       else {
                         newPath = currentDir.resolve(arg).normalize();
                       }
