@@ -36,6 +36,7 @@ public class Main {
         }
       }
     }
+    sc.close();
   }
   private static String getPath(String command) {
     for (String path : System.getenv("PATH").split(":")) {
