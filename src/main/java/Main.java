@@ -40,18 +40,26 @@ public class Main {
                     System.out.println(System.getProperty("user.dir"));
                     break;
                 case "cd":
-                if (!arg.isEmpty() && arg.startsWith("/")) { // Only allow absolute paths
-                  Path newPath = Path.of(arg);
-                  if (Files.isDirectory(newPath)) {
-                      currentDir = newPath.toAbsolutePath();
-                      System.setProperty("user.dir", currentDir.toString());
-                  } else {
+                    if (!arg.isEmpty()) { 
+                      Path newPath;
+                      if (arg.startsWith("/")) {
+                        newPath = Path.of(arg);
+                      }
+                      else {
+                        newPath = currentDir.resolve(arg).normalize();
+                      }
+                      if (Files.isDirectory(newPath)) {
+                        currentDir = newPath.toAbsolutePath();
+                        System.setProperty("user.dir", currentDir.toString());
+                      } 
+                      else {
                       System.out.printf("cd: %s: No such file or directory%n", arg);
-                  }
-              } else {
-                  System.out.println("cd: only absolute paths are allowed at this stage");
-              }
-              break;
+                      }
+                    } 
+                    else {
+                      System.out.println("cd: missing argument");
+                    }
+                    break;
                 default:
                     String path = getPath(cmd);
                     if (path == null) {
