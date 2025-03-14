@@ -16,10 +16,12 @@ public class Main {
             String commandString = "";
             int i = 0;
             StringBuilder sb = new StringBuilder();
+            boolean lastQuoted = false;
             while (i < input.length()) {
                 while (i < input.length() && Character.isWhitespace(input.charAt(i))) {
                     i++;
-                }
+                    lastQuoted = false;
+                    }
                 if (i >= input.length()) break;
                 if (commandString.isEmpty()) {
                     while (i < input.length() && !Character.isWhitespace(input.charAt(i))) {
@@ -29,6 +31,7 @@ public class Main {
                     commandString = sb.toString();
                     tokens.add(commandString);
                     sb.setLength(0);
+                    lastQuoted = false;
                     continue;
                 }
                 if (input.charAt(i) == '\'') {
@@ -38,8 +41,15 @@ public class Main {
                         i++;
                     }
                     i++;
-                    tokens.add(sb.toString());
+                    if (lastQuoted && !tokens.isEmpty()) {
+                        int lastIndex = tokens.size() - 1;
+                        tokens.set(lastIndex, tokens.get(lastIndex) + sb.toString());
+                    } 
+                    else {
+                        tokens.add(sb.toString());
+                    }
                     sb.setLength(0);
+                    lastQuoted = true;
                     continue;
                 }
                 while (i < input.length() && !Character.isWhitespace(input.charAt(i))) {
@@ -48,6 +58,7 @@ public class Main {
                 }
                 tokens.add(sb.toString());
                 sb.setLength(0);
+                lastQuoted = false;
             }
             String[] parts = tokens.toArray(new String[0]);
             String cmd = parts[0];
