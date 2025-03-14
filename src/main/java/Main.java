@@ -1,10 +1,14 @@
 import java.nio.file.*;
 import java.util.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+@SuppressWarnings("unused")
 public class Main {
     public static void main(String[] args) throws Exception {
-        Set<String> commands = Set.of("echo", "exit", "type", "pwd");
+        Set<String> commands = Set.of("echo", "exit", "type", "pwd", "cd");
         Scanner sc = new Scanner(System.in);
         boolean running = true;
+        Path currentDir = Path.of(System.getProperty("user.dir"));
         while (running) {
             System.out.print("$ ");
             String input = sc.nextLine();
@@ -34,6 +38,17 @@ public class Main {
                     break;
                 case "pwd":
                     System.out.println(System.getProperty("user.dir"));
+                    break;
+                case "cd":
+                    if (!arg.isEmpty()) {
+                      Path newPath = currentDir.resolve(arg).normalize();
+                      if (Files.isDirectory(newPath)) {
+                        currentDir = newPath.toAbsolutePath();
+                        System.setProperty("user.dir", currentDir.toString());
+                      } else {
+                      System.out.printf("cd: %s: No such file or directory%n", arg);
+                      }
+                    }
                     break;
                 default:
                     String path = getPath(cmd);
