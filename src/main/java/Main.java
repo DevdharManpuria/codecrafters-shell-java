@@ -12,9 +12,46 @@ public class Main {
         while (running) {
             System.out.print("$ ");
             String input = sc.nextLine();
-            String[] parts = input.split(" ", 2);
+            List<String> tokens = new ArrayList<>();
+            String commandString = "";
+            int i = 0;
+            StringBuilder sb = new StringBuilder();
+            while (i < input.length()) {
+                while (i < input.length() && Character.isWhitespace(input.charAt(i))) {
+                    i++;
+                }
+                if (i >= input.length()) break;
+                if (commandString.isEmpty()) {
+                    while (i < input.length() && !Character.isWhitespace(input.charAt(i))) {
+                        sb.append(input.charAt(i));
+                        i++;
+                    }
+                    commandString = sb.toString();
+                    tokens.add(commandString);
+                    sb.setLength(0);
+                    continue;
+                }
+                if (input.charAt(i) == '\'') {
+                    i++; 
+                    while (i < input.length() && input.charAt(i) != '\'') {
+                        sb.append(input.charAt(i));
+                        i++;
+                    }
+                    i++;
+                    tokens.add(sb.toString());
+                    sb.setLength(0);
+                    continue;
+                }
+                while (i < input.length() && !Character.isWhitespace(input.charAt(i))) {
+                    sb.append(input.charAt(i));
+                    i++;
+                }
+                tokens.add(sb.toString());
+                sb.setLength(0);
+            }
+            String[] parts = tokens.toArray(new String[0]);
             String cmd = parts[0];
-            String arg = parts.length > 1 ? parts[1] : "";
+            String arg = tokens.size() > 1 ? String.join(" ", tokens.subList(1, tokens.size())) : "";
             switch (cmd) {
                 case "exit":
                     if (arg.equals("0")) {
