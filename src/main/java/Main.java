@@ -52,6 +52,36 @@ public class Main {
                     lastQuoted = true;
                     continue;
                 }
+                else if (input.charAt(i) == '\"') {
+                    i++;
+                    while (i < input.length() && input.charAt(i) != '\"') {
+                        if (input.charAt(i) == '\\' && i + 1 < input.length()) {
+                            char next = input.charAt(i + 1);
+                            if (next == '\\' || next == '$' || next == '\"' || input.charAt(i + 1) == '\n') {
+                                sb.append(next);
+                                i += 2;
+                                continue;
+                            } else {
+                                sb.append('\\');
+                                i++;
+                                continue;
+                            }
+                        } else {
+                            sb.append(input.charAt(i));
+                            i++;
+                        }
+                    }
+                    i++;
+                    if (lastQuoted && !tokens.isEmpty()) {
+                        int lastIndex = tokens.size() - 1;
+                        tokens.set(lastIndex, tokens.get(lastIndex) + sb.toString());
+                    } else {
+                        tokens.add(sb.toString());
+                    }
+                    sb.setLength(0);
+                    lastQuoted = true;
+                    continue;
+                }                
                 while (i < input.length() && !Character.isWhitespace(input.charAt(i))) {
                     sb.append(input.charAt(i));
                     i++;
