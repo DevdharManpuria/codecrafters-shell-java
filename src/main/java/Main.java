@@ -24,26 +24,54 @@ public class Main {
                 }
                 if (i >= input.length()) break;
                 if (commandString.isEmpty()) {
-                    while (i < input.length() && !Character.isWhitespace(input.charAt(i))) {
-                        if (input.charAt(i) == '\\') {
-                            i++;
-                            if (i < input.length()) {
+                    if (input.charAt(i) == '\'' || input.charAt(i) == '\"') {
+                        char quote = input.charAt(i);
+                        i++;
+                        while (i < input.length() && input.charAt(i) != quote) {
+                            if (quote == '\"' && input.charAt(i) == '\\' && i + 1 < input.length()) {
+                                char next = input.charAt(i + 1);
+                                if (next == '\\' || next == '$' || next == '\"' || input.charAt(i + 1) == '\n') {
+                                    sb.append(next);
+                                    i += 2;
+                                    continue;
+                                } else {
+                                    sb.append('\\');
+                                    i++;
+                                    continue;
+                                }
+                            } else {
                                 sb.append(input.charAt(i));
                                 i++;
-                            } else {
-                                sb.append('\\');
                             }
-                        } else {
-                            sb.append(input.charAt(i));
-                            i++;
                         }
+                        i++; 
+                        commandString = sb.toString();
+                        tokens.add(commandString);
+                        sb.setLength(0);
+                        lastQuoted = true;
+                        continue;
+                    } else {
+                        while (i < input.length() && !Character.isWhitespace(input.charAt(i))) {
+                            if (input.charAt(i) == '\\') {
+                                i++;
+                                if (i < input.length()) {
+                                    sb.append(input.charAt(i));
+                                    i++;
+                                } else {
+                                    sb.append('\\');
+                                }
+                            } else {
+                                sb.append(input.charAt(i));
+                                i++;
+                            }
+                        }
+                        commandString = sb.toString();
+                        tokens.add(commandString);
+                        sb.setLength(0);
+                        lastQuoted = false;
+                        continue;
                     }
-                    commandString = sb.toString();
-                    tokens.add(commandString);
-                    sb.setLength(0);
-                    lastQuoted = false;
-                    continue;
-                }
+                }                
                 if (input.charAt(i) == '\'') {
                     i++;
                     while (i < input.length() && input.charAt(i) != '\'') {
