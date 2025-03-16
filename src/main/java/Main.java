@@ -21,12 +21,22 @@ public class Main {
                 while (i < input.length() && Character.isWhitespace(input.charAt(i))) {
                     i++;
                     lastQuoted = false;
-                    }
+                }
                 if (i >= input.length()) break;
                 if (commandString.isEmpty()) {
                     while (i < input.length() && !Character.isWhitespace(input.charAt(i))) {
-                        sb.append(input.charAt(i));
-                        i++;
+                        if (input.charAt(i) == '\\') {
+                            i++;
+                            if (i < input.length()) {
+                                sb.append(input.charAt(i));
+                                i++;
+                            } else {
+                                sb.append('\\');
+                            }
+                        } else {
+                            sb.append(input.charAt(i));
+                            i++;
+                        }
                     }
                     commandString = sb.toString();
                     tokens.add(commandString);
@@ -35,7 +45,7 @@ public class Main {
                     continue;
                 }
                 if (input.charAt(i) == '\'') {
-                    i++; 
+                    i++;
                     while (i < input.length() && input.charAt(i) != '\'') {
                         sb.append(input.charAt(i));
                         i++;
@@ -44,15 +54,13 @@ public class Main {
                     if (lastQuoted && !tokens.isEmpty()) {
                         int lastIndex = tokens.size() - 1;
                         tokens.set(lastIndex, tokens.get(lastIndex) + sb.toString());
-                    } 
-                    else {
+                    } else {
                         tokens.add(sb.toString());
                     }
                     sb.setLength(0);
                     lastQuoted = true;
                     continue;
-                }
-                else if (input.charAt(i) == '\"') {
+                } else if (input.charAt(i) == '\"') {
                     i++;
                     while (i < input.length() && input.charAt(i) != '\"') {
                         if (input.charAt(i) == '\\' && i + 1 < input.length()) {
@@ -81,10 +89,20 @@ public class Main {
                     sb.setLength(0);
                     lastQuoted = true;
                     continue;
-                }                
+                }
                 while (i < input.length() && !Character.isWhitespace(input.charAt(i))) {
-                    sb.append(input.charAt(i));
-                    i++;
+                    if (input.charAt(i) == '\\') {
+                        i++;
+                        if (i < input.length()) {
+                            sb.append(input.charAt(i));
+                            i++;
+                        } else {
+                            sb.append('\\');
+                        }
+                    } else {
+                        sb.append(input.charAt(i));
+                        i++;
+                    }
                 }
                 tokens.add(sb.toString());
                 sb.setLength(0);
@@ -92,25 +110,33 @@ public class Main {
             }
             String[] parts = tokens.toArray(new String[0]);
             String cmd = parts[0];
-            String arg = tokens.size() > 1 ? String.join(" ", tokens.subList(1, tokens.size())) : "";
             switch (cmd) {
                 case "exit":
-                    if (arg.equals("0")) {
-                        running = false;
+                    if (parts.length > 1) {
+                        String arg = String.join(" ", Arrays.copyOfRange(parts, 1, parts.length));
+                        if (arg.equals("0")) {
+                            running = false;
+                        }
                     }
                     break;
                 case "echo":
-                    System.out.println(arg);
+                    if (parts.length > 1) {
+                        String arg = String.join(" ", Arrays.copyOfRange(parts, 1, parts.length));
+                        System.out.println(arg);
+                    }
                     break;
                 case "type":
-                    if (commands.contains(arg)) {
-                        System.out.printf("%s is a shell builtin%n", arg);
-                    } else {
-                        String path = getPath(arg);
-                        if (path == null) {
-                            System.out.printf("%s: not found%n", arg);
+                    if (parts.length > 1) {
+                        String term = String.join(" ", Arrays.copyOfRange(parts, 1, parts.length));
+                        if (commands.contains(term)) {
+                            System.out.printf("%s is a shell builtin%n", term);
                         } else {
-                            System.out.printf("%s is %s%n", arg, path);
+                            String path = getPath(term);
+                            if (path == null) {
+                                System.out.printf("%s: not found%n", term);
+                            } else {
+                                System.out.printf("%s is %s%n", term, path);
+                            }
                         }
                     }
                     break;
@@ -118,34 +144,30 @@ public class Main {
                     System.out.println(System.getProperty("user.dir"));
                     break;
                 case "cd":
-                    if (!arg.isEmpty()) { 
-                      Path newPath;
-                      String homeDir = System.getenv("HOME");
-                      if (homeDir == null) {
-                        homeDir = System.getProperty("user.home");
-                      }
-                      if (arg.startsWith("/")) {
-                        newPath = Path.of(arg);
-                      }
-                      else if (arg.equals("~")) {
-                        newPath = Path.of(homeDir);
-                      } 
-                      else if (arg.startsWith("~/")) {
-                        newPath = Path.of(homeDir, arg.substring(2));
-                      }
-                      else {
-                        newPath = currentDir.resolve(arg).normalize();
-                      }
-                      if (Files.isDirectory(newPath)) {
-                        currentDir = newPath.toAbsolutePath();
-                        System.setProperty("user.dir", currentDir.toString());
-                      } 
-                      else {
-                      System.out.printf("cd: %s: No such file or directory%n", arg);
-                      }
-                    } 
-                    else {
-                      System.out.println("cd: missing argument");
+                    if (parts.length > 1) {
+                        String arg = String.join(" ", Arrays.copyOfRange(parts, 1, parts.length));
+                        Path newPath;
+                        String homeDir = System.getenv("HOME");
+                        if (homeDir == null) {
+                            homeDir = System.getProperty("user.home");
+                        }
+                        if (arg.startsWith("/")) {
+                            newPath = Path.of(arg);
+                        } else if (arg.equals("~")) {
+                            newPath = Path.of(homeDir);
+                        } else if (arg.startsWith("~/")) {
+                            newPath = Path.of(homeDir, arg.substring(2));
+                        } else {
+                            newPath = currentDir.resolve(arg).normalize();
+                        }
+                        if (Files.isDirectory(newPath)) {
+                            currentDir = newPath.toAbsolutePath();
+                            System.setProperty("user.dir", currentDir.toString());
+                        } else {
+                            System.out.printf("cd: %s: No such file or directory%n", arg);
+                        }
+                    } else {
+                        System.out.println("cd: missing argument");
                     }
                     break;
                 default:
@@ -165,16 +187,16 @@ public class Main {
         sc.close();
     }
     private static String getPath(String command) {
-      Path cmdPath = Path.of(command);
-      if ((cmdPath.isAbsolute() || command.contains("/")) && Files.isRegularFile(cmdPath) && Files.isExecutable(cmdPath)) {
-          return cmdPath.toString();
-      }
-      for (String path : System.getenv("PATH").split(":")) {
-          Path fullPath = Path.of(path, command);
-          if (Files.exists(fullPath) && Files.isExecutable(fullPath)) {
-              return fullPath.toString();
-          }
-      }
-      return null;
-  }
+        Path cmdPath = Path.of(command);
+        if ((cmdPath.isAbsolute() || command.contains("/")) && Files.isRegularFile(cmdPath) && Files.isExecutable(cmdPath)) {
+            return cmdPath.toString();
+        }
+        for (String path : System.getenv("PATH").split(":")) {
+            Path fullPath = Path.of(path, command);
+            if (Files.exists(fullPath) && Files.isExecutable(fullPath)) {
+                return fullPath.toString();
+            }
+        }
+        return null;
+    }
 }
