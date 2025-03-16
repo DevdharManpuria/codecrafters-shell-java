@@ -239,6 +239,10 @@ public class Main {
                 return fullPath.toString();
             }
         }
+        Path cwdPath = Path.of(System.getProperty("user.dir")).resolve(command);
+        if (Files.exists(cwdPath) && Files.isExecutable(cwdPath)) {
+            return cwdPath.toAbsolutePath().toString();
+        }
         return null;
     }
 }
