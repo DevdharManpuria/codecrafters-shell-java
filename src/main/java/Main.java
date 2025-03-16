@@ -176,17 +176,26 @@ public class Main {
                     }
                     break;
                 default:
-                    String path = getPath(cmd);
+                    String cmdUnquoted = cmd;
+                    if ((cmd.startsWith("\"") && cmd.endsWith("\"")) || (cmd.startsWith("'") && cmd.endsWith("'"))) {
+                        cmdUnquoted = cmd.substring(1, cmd.length() - 1);
+                    }
+                    String path = getPath(cmdUnquoted);
                     if (path == null) {
                         System.out.printf("%s: command not found%n", cmd);
-                    } else {
+                    } 
+                    else {
+                        parts[0] = cmdUnquoted;
                         for (int j = 0; j < parts.length; j++) {
-                            parts[j] = parts[j].replaceAll("^'(.*)'$", "$1");
+                        if ((parts[j].startsWith("\"") && parts[j].endsWith("\"")) ||
+                            (parts[j].startsWith("'") && parts[j].endsWith("'"))) {
+                            parts[j] = parts[j].substring(1, parts[j].length() - 1);
                         }
-                        Process p = new ProcessBuilder(parts).start();
-                        p.getInputStream().transferTo(System.out);
-                    }
-                    break;
+                        }
+                    Process p = new ProcessBuilder(parts).start();
+                    p.getInputStream().transferTo(System.out);
+                }
+                break;
             }
         }
         sc.close();
