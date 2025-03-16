@@ -104,9 +104,14 @@ public class Main {
                         i++;
                     }
                 }
-                tokens.add(sb.toString());
+                if (lastQuoted && !tokens.isEmpty()) {
+                    int lastIndex = tokens.size() - 1;
+                    tokens.set(lastIndex, tokens.get(lastIndex) + sb.toString());
+                } else {
+                    tokens.add(sb.toString());
+                }
                 sb.setLength(0);
-                lastQuoted = false;
+                lastQuoted = true;
             }
             String[] parts = tokens.toArray(new String[0]);
             String cmd = parts[0];
