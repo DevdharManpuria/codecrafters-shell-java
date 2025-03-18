@@ -12,6 +12,7 @@ public class Main {
         Set<String> commands = Set.of("echo", "exit", "type", "pwd", "cd");
         Scanner sc = new Scanner(System.in);
         boolean running = true;
+        String redirectFile = null;
         Path currentDir = Path.of(System.getProperty("user.dir"));
         while (running) {
             System.out.print("$ ");
@@ -145,13 +146,19 @@ public class Main {
                 sb.setLength(0);
                 lastQuoted = true;
             }
-            String redirectFile = null;
+            String redirectStdoutFile = null;
+            String redirectStderrFile = null;
             List<String> newTokens = new ArrayList<>();
             for (int j = 0; j < tokens.size(); j++) {
                 String token = tokens.get(j);
                 if (token.equals(">") || token.equals("1>")) {
                     if (j + 1 < tokens.size()) {
-                        redirectFile = tokens.get(j + 1);
+                        redirectStdoutFile = tokens.get(j + 1);
+                        j++;
+                    }
+                } else if (token.equals("2>")) {
+                    if (j + 1 < tokens.size()) {
+                        redirectStderrFile = tokens.get(j + 1);
                         j++;
                     }
                 } else {
@@ -244,16 +251,19 @@ public class Main {
                             }
                         }
                         ProcessBuilder pb = new ProcessBuilder(parts);
-                        if (redirectFile != null) {
-                            pb.redirectOutput(new File(redirectFile));
-                            pb.redirectError(ProcessBuilder.Redirect.INHERIT); 
-                            Process p = pb.start();
-                            p.waitFor(); 
-                        } else {
-                            Process p = pb.start();
-                            p.getInputStream().transferTo(System.out); 
-                            p.getErrorStream().transferTo(System.err); 
-                            p.waitFor(); 
+                        if (redirectStdoutFile != null) {
+                            pb.redirectOutput(new File(redirectStdoutFile));
+                        }
+                        if (redirectStderrFile != null) {
+                            pb.redirectError(new File(redirectStderrFile));
+                        }
+                        Process p = pb.start();
+                        p.waitFor();
+                        if (redirectStdoutFile == null) {
+                            p.getInputStream().transferTo(System.out);
+                        }
+                        if (redirectStderrFile == null) {
+                            p.getErrorStream().transferTo(System.err);
                         }
                     }
                     break;
