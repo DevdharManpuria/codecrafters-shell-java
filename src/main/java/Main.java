@@ -1,7 +1,6 @@
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
-import java.io.ByteArrayOutputStream;
 import java.nio.file.*;
 import java.util.*;
 import java.nio.file.Files;
@@ -12,7 +11,6 @@ public class Main {
         Set<String> commands = Set.of("echo", "exit", "type", "pwd", "cd");
         Scanner sc = new Scanner(System.in);
         boolean running = true;
-        String redirectFile = null;
         Path currentDir = Path.of(System.getProperty("user.dir"));
         while (running) {
             System.out.print("$ ");
@@ -169,10 +167,15 @@ public class Main {
             String[] parts = tokens.toArray(new String[0]);
             String cmd = parts[0];
             boolean isBuiltIn = commands.contains(cmd);
-            PrintStream oldOut = null;
-            if (isBuiltIn && redirectFile != null) {
-                oldOut = System.out;
-                System.setOut(new PrintStream(new FileOutputStream(redirectFile)));
+            PrintStream oldOut = System.out;
+            PrintStream oldErr = System.err;
+            if (isBuiltIn) {
+                if (redirectStdoutFile != null) {
+                    System.setOut(new PrintStream(new FileOutputStream(redirectStdoutFile)));
+                }
+                if (redirectStderrFile != null) {
+                    System.setErr(new PrintStream(new FileOutputStream(redirectStderrFile)));
+                }
             }
             switch (cmd) {
                 case "exit":
@@ -236,7 +239,8 @@ public class Main {
                     break;
                 default:
                     String cmdUnquoted = cmd;
-                    if ((cmd.startsWith("\"") && cmd.endsWith("\"")) || (cmd.startsWith("'") && cmd.endsWith("'"))) {
+                    if ((cmd.startsWith("\"") && cmd.endsWith("\"")) ||
+                        (cmd.startsWith("'") && cmd.endsWith("'"))) {
                         cmdUnquoted = cmd.substring(1, cmd.length() - 1);
                     }
                     String path = getPath(cmdUnquoted);
@@ -268,10 +272,10 @@ public class Main {
                     }
                     break;
             }
-            if (oldOut != null) {
-                System.out.flush();
-                System.setOut(oldOut);
-            }
+            System.out.flush();
+            System.err.flush();
+            System.setOut(oldOut);
+            System.setErr(oldErr);
         }
         sc.close();
     }
