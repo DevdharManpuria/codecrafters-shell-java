@@ -249,6 +249,7 @@ public class Main {
                         pb.redirectErrorStream(true);
                     }
                     Process p = pb.start();
+                    p.waitFor();
                     if (redirectFile == null) {
                         p.getInputStream().transferTo(System.out);
                     }
