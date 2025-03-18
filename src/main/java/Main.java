@@ -245,16 +245,15 @@ public class Main {
                         }
                         ProcessBuilder pb = new ProcessBuilder(parts);
                         if (redirectFile != null) {
-                            pb.redirectErrorStream(true);
+                            pb.redirectOutput(new File(redirectFile));
+                            pb.redirectError(ProcessBuilder.Redirect.INHERIT); 
                             Process p = pb.start();
-                            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                            p.getInputStream().transferTo(baos);
-                            p.waitFor();
-                            Files.write(Path.of(redirectFile), baos.toByteArray());
+                            p.waitFor(); 
                         } else {
                             Process p = pb.start();
-                            p.waitFor();
-                            p.getInputStream().transferTo(System.out);
+                            p.getInputStream().transferTo(System.out); 
+                            p.getErrorStream().transferTo(System.err); 
+                            p.waitFor(); 
                         }
                     }
                     break;
