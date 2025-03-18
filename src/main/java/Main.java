@@ -1,3 +1,6 @@
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.PrintStream;
 import java.nio.file.*;
 import java.util.*;
 import java.nio.file.Files;
@@ -141,8 +144,28 @@ public class Main {
                 sb.setLength(0);
                 lastQuoted = true;
             }
+            String redirectFile = null;
+            List<String> newTokens = new ArrayList<>();
+            for (int j = 0; j < tokens.size(); j++) {
+                String token = tokens.get(j);
+                if (token.equals(">") || token.equals("1>")) {
+                    if (j + 1 < tokens.size()) {
+                        redirectFile = tokens.get(j + 1);
+                        j++;
+                    }
+                } else {
+                    newTokens.add(token);
+                }
+            }
+            tokens = newTokens;
             String[] parts = tokens.toArray(new String[0]);
             String cmd = parts[0];
+            boolean isBuiltIn = commands.contains(cmd);
+            PrintStream oldOut = null;
+            if (isBuiltIn && redirectFile != null) {
+                oldOut = System.out;
+                System.setOut(new PrintStream(new FileOutputStream(redirectFile)));
+            }
             switch (cmd) {
                 case "exit":
                     if (parts.length > 1) {
@@ -220,10 +243,20 @@ public class Main {
                             parts[j] = parts[j].substring(1, parts[j].length() - 1);
                         }
                         }
-                    Process p = new ProcessBuilder(parts).start();
-                    p.getInputStream().transferTo(System.out);
+                        ProcessBuilder pb = new ProcessBuilder(parts);
+                    if (redirectFile != null) {
+                        pb.redirectOutput(new File(redirectFile));
+                    }
+                    Process p = pb.start();
+                    if (redirectFile == null) {
+                        p.getInputStream().transferTo(System.out);
+                    }
                 }
                 break;
+            }
+            if (oldOut != null) {
+                    System.out.flush();
+                    System.setOut(oldOut);
             }
         }
         sc.close();
