@@ -234,31 +234,30 @@ public class Main {
                     String path = getPath(cmdUnquoted);
                     if (path == null) {
                         System.out.printf("%s: command not found%n", cmd);
-                    } 
-                    else {
+                    } else {
                         parts[0] = cmdUnquoted;
                         for (int j = 0; j < parts.length; j++) {
-                        if ((parts[j].startsWith("\"") && parts[j].endsWith("\"")) ||
-                            (parts[j].startsWith("'") && parts[j].endsWith("'"))) {
-                            parts[j] = parts[j].substring(1, parts[j].length() - 1);
-                        }
+                            if ((parts[j].startsWith("\"") && parts[j].endsWith("\"")) ||
+                                (parts[j].startsWith("'") && parts[j].endsWith("'"))) {
+                                parts[j] = parts[j].substring(1, parts[j].length() - 1);
+                            }
                         }
                         ProcessBuilder pb = new ProcessBuilder(parts);
-                    if (redirectFile != null) {
-                        pb.redirectOutput(new File(redirectFile));
-                        pb.redirectError(new File(redirectFile));
+                        if (redirectFile != null) {
+                            pb.redirectOutput(new File(redirectFile));
+                            pb.redirectError(new File(redirectFile));
+                        }
+                        Process p = pb.start();
+                        p.waitFor();
+                        if (redirectFile == null) {
+                            p.getInputStream().transferTo(System.out);
+                        }
                     }
-                    Process p = pb.start();
-                    p.waitFor();
-                    if (redirectFile == null) {
-                        p.getInputStream().transferTo(System.out);
-                    }
-                }
-                break;
+                    break;
             }
             if (oldOut != null) {
-                    System.out.flush();
-                    System.setOut(oldOut);
+                System.out.flush();
+                System.setOut(oldOut);
             }
         }
         sc.close();
