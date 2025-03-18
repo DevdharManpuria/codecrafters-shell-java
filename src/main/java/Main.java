@@ -1,228 +1,286 @@
-import java.io.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.PrintStream;
+import java.io.ByteArrayOutputStream;
+import java.nio.file.*;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
+import java.nio.file.Files;
+import java.nio.file.Path;
+@SuppressWarnings("unused")
 public class Main {
-    public static List<String> tokenize(String input) {
-        List<String> tokens = new ArrayList<>();
-        Pattern pattern = Pattern.compile("\"([^\"]*)\"|'([^']*)'|(\\S+)");
-        Matcher matcher = pattern.matcher(input);
-        while (matcher.find()) {
-            if (matcher.group(1) != null) {
-                tokens.add(matcher.group(1));
-            } else if (matcher.group(2) != null) {
-                tokens.add(matcher.group(2));
-            } else if (matcher.group(3) != null) {
-                tokens.add(matcher.group(3));
-            }
-        }
-        return tokens;
-    }
-
-    public static class ShellContext {
-        public AtomicBoolean exitCondition = new AtomicBoolean(false);
-        public CmdProcessor cmdProc = new CmdProcessor();
-        public List<String> path = new ArrayList<>();
-        private String cwd;
-        public ShellContext() {
-            cwd = System.getProperty("user.dir");
-        }
-        public void exit() {
-            exitCondition.set(true);
-        }
-        public Command findCmd(String name) {
-            return cmdProc.find(name);
-        }
-        public void loadPath(String pathstr) {
-            if (pathstr == null) return;
-            String[] dirs = pathstr.split(":");
-            for (String d : dirs) {
-                path.add(d);
-            }
-        }
-        public void clearPath() {
-            path.clear();
-        }
-        public String searchPath(String cmd) {
-            for (String dir : path) {
-                File f = new File(dir, cmd);
-                if (f.exists() && f.canExecute()) {
-                    return f.getAbsolutePath();
+    public static void main(String[] args) throws Exception {
+        Set<String> commands = Set.of("echo", "exit", "type", "pwd", "cd");
+        Scanner sc = new Scanner(System.in);
+        boolean running = true;
+        Path currentDir = Path.of(System.getProperty("user.dir"));
+        while (running) {
+            System.out.print("$ ");
+            String input = sc.nextLine();
+            List<String> tokens = new ArrayList<>();
+            String commandString = "";
+            int i = 0;
+            StringBuilder sb = new StringBuilder();
+            boolean lastQuoted = false;
+            while (i < input.length()) {
+                while (i < input.length() && Character.isWhitespace(input.charAt(i))) {
+                    i++;
+                    lastQuoted = false;
                 }
-            }
-            return "";
-        }
-        public void setCwd(String newCwd) {
-            if (newCwd == null || newCwd.isEmpty()) {
-                cwd = System.getProperty("user.dir");
-            } else {
-                File dir = new File(newCwd);
-                if (dir.exists() && dir.isDirectory()) {
-                    cwd = dir.getAbsolutePath();
-                } else {
-                    System.out.println("cd: " + newCwd + ": No such file or directory");
-                }
-            }
-        }
-        public String getCwd() {
-            return cwd;
-        }
-    }
-
-    public interface Command {
-        String getName();
-        int execute(ShellContext ctx, String[] args);
-    }
-
-    public static class CmdProcessor {
-        private List<Command> commands = new ArrayList<>();
-        public int add(Command cmd) {
-            commands.add(cmd);
-            return commands.size() - 1;
-        }
-        public Command find(String name) {
-            for (Command cmd : commands) {
-                if (cmd.getName().equals(name))
-                    return cmd;
-            }
-            return null;
-        }
-        public int process(ShellContext ctx, String[] args) {
-            if (args.length == 0) return 0;
-            Command cmd = find(args[0]);
-            if (cmd != null) {
-                return cmd.execute(ctx, args);
-            }
-            try {
-                ProcessBuilder pb = new ProcessBuilder(args);
-                pb.directory(new File(ctx.getCwd()));
-                pb.inheritIO();
-                Process p = pb.start();
-                return p.waitFor();
-            } catch (IOException | InterruptedException e) {
-                System.out.println(args[0] + ": command not found");
-                return -1;
-            }
-        }
-    }
-
-    public static class exit implements Command {
-        public String getName() {
-            return "exit";
-        }
-        public int execute(ShellContext ctx, String[] args) {
-            int ret = 0;
-            System.out.println("exit");
-            if (args.length > 2) {
-                System.out.println("shell: exit: too many arguments");
-                return 1;
-            }
-            if (args.length == 2) {
-                try {
-                    ret = Integer.parseInt(args[1]);
-                } catch (NumberFormatException e) {
-                    System.out.println("shell: exit: " + args[1] + ": numeric argument required");
-                    ret = 2;
-                }
-            }
-            ctx.exit();
-            return ret;
-        }
-    }
-
-    public static class echo implements Command {
-        public String getName() {
-            return "echo";
-        }
-        public int execute(ShellContext ctx, String[] args) {
-            for (int i = 1; i < args.length; i++) {
-                System.out.print(args[i]);
-                if (i < args.length - 1)
-                    System.out.print(" ");
-            }
-            System.out.println();
-            return 0;
-        }
-    }
-
-    public static class type implements Command {
-        public String getName() {
-            return "type";
-        }
-        public int execute(ShellContext ctx, String[] args) {
-            if (args.length == 1)
-                return 0;
-            for (int i = 1; i < args.length; i++) {
-                Command cmd = ctx.findCmd(args[i]);
-                if (cmd != null) {
-                    System.out.println(args[i] + " is a shell builtin");
-                } else {
-                    String cmdPath = ctx.searchPath(args[i]);
-                    if (!cmdPath.isEmpty()) {
-                        System.out.println(args[i] + " is " + cmdPath);
+                if (i >= input.length()) break;
+                if (commandString.isEmpty()) {
+                    if (input.charAt(i) == '\'' || input.charAt(i) == '\"') {
+                        char quote = input.charAt(i);
+                        i++;
+                        while (i < input.length() && input.charAt(i) != quote) {
+                            if (quote == '\"' && input.charAt(i) == '\\' && i + 1 < input.length()) {
+                                char next = input.charAt(i + 1);
+                                if (next == '\\' || next == '$' || next == '\"' || input.charAt(i + 1) == '\n') {
+                                    sb.append(next);
+                                    i += 2;
+                                    continue;
+                                } else {
+                                    sb.append('\\');
+                                    i++;
+                                    continue;
+                                }
+                            } else {
+                                sb.append(input.charAt(i));
+                                i++;
+                            }
+                        }
+                        i++; 
+                        commandString = sb.toString();
+                        tokens.add(commandString);
+                        sb.setLength(0);
+                        lastQuoted = true;
+                        continue;
                     } else {
-                        System.out.println(args[i] + " not found");
+                        while (i < input.length() && !Character.isWhitespace(input.charAt(i))) {
+                            if (input.charAt(i) == '\\') {
+                                i++;
+                                if (i < input.length()) {
+                                    sb.append(input.charAt(i));
+                                    i++;
+                                } else {
+                                    sb.append('\\');
+                                }
+                            } else {
+                                sb.append(input.charAt(i));
+                                i++;
+                            }
+                        }
+                        commandString = sb.toString();
+                        tokens.add(commandString);
+                        sb.setLength(0);
+                        lastQuoted = false;
+                        continue;
+                    }
+                }                
+                if (input.charAt(i) == '\'') {
+                    i++;
+                    while (i < input.length() && input.charAt(i) != '\'') {
+                        sb.append(input.charAt(i));
+                        i++;
+                    }
+                    i++;
+                    if (lastQuoted && !tokens.isEmpty()) {
+                        int lastIndex = tokens.size() - 1;
+                        tokens.set(lastIndex, tokens.get(lastIndex) + sb.toString());
+                    } else {
+                        tokens.add(sb.toString());
+                    }
+                    sb.setLength(0);
+                    lastQuoted = true;
+                    continue;
+                } else if (input.charAt(i) == '\"') {
+                    i++;
+                    while (i < input.length() && input.charAt(i) != '\"') {
+                        if (input.charAt(i) == '\\' && i + 1 < input.length()) {
+                            char next = input.charAt(i + 1);
+                            if (next == '\\' || next == '$' || next == '\"' || input.charAt(i + 1) == '\n') {
+                                sb.append(next);
+                                i += 2;
+                                continue;
+                            } else {
+                                sb.append('\\');
+                                i++;
+                                continue;
+                            }
+                        } else {
+                            sb.append(input.charAt(i));
+                            i++;
+                        }
+                    }
+                    i++;
+                    if (lastQuoted && !tokens.isEmpty()) {
+                        int lastIndex = tokens.size() - 1;
+                        tokens.set(lastIndex, tokens.get(lastIndex) + sb.toString());
+                    } else {
+                        tokens.add(sb.toString());
+                    }
+                    sb.setLength(0);
+                    lastQuoted = true;
+                    continue;
+                }
+                while (i < input.length() && !Character.isWhitespace(input.charAt(i))) {
+                    if (input.charAt(i) == '\\') {
+                        i++;
+                        if (i < input.length()) {
+                            sb.append(input.charAt(i));
+                            i++;
+                        } else {
+                            sb.append('\\');
+                        }
+                    } else {
+                        sb.append(input.charAt(i));
+                        i++;
                     }
                 }
-            }
-            return 1;
-        }
-    }
-
-    public static class pwd implements Command {
-        public String getName() {
-            return "pwd";
-        }
-        public int execute(ShellContext ctx, String[] args) {
-            System.out.println(ctx.getCwd());
-            return 0;
-        }
-    }
-
-    public static class cd implements Command {
-        public String getName() {
-            return "cd";
-        }
-        public int execute(ShellContext ctx, String[] args) {
-            if (args.length == 1) {
-                String home = System.getenv("HOME");
-                if (home == null)
-                    home = System.getProperty("user.home");
-                ctx.setCwd(home);
-            } else {
-                String newCwd = args[1];
-                if (newCwd.startsWith("~")) {
-                    String home = System.getenv("HOME");
-                    if (home == null)
-                        home = System.getProperty("user.home");
-                    newCwd = home + newCwd.substring(1);
+                if (lastQuoted && !tokens.isEmpty()) {
+                    int lastIndex = tokens.size() - 1;
+                    tokens.set(lastIndex, tokens.get(lastIndex) + sb.toString());
+                } else {
+                    tokens.add(sb.toString());
                 }
-                ctx.setCwd(newCwd);
+                sb.setLength(0);
+                lastQuoted = true;
             }
-            return 0;
+            String redirectFile = null;
+            List<String> newTokens = new ArrayList<>();
+            for (int j = 0; j < tokens.size(); j++) {
+                String token = tokens.get(j);
+                if (token.equals(">") || token.equals("1>")) {
+                    if (j + 1 < tokens.size()) {
+                        redirectFile = tokens.get(j + 1);
+                        j++;
+                    }
+                } else {
+                    newTokens.add(token);
+                }
+            }
+            tokens = newTokens;
+            String[] parts = tokens.toArray(new String[0]);
+            String cmd = parts[0];
+            boolean isBuiltIn = commands.contains(cmd);
+            PrintStream oldOut = null;
+            if (isBuiltIn && redirectFile != null) {
+                oldOut = System.out;
+                System.setOut(new PrintStream(new FileOutputStream(redirectFile)));
+            }
+            switch (cmd) {
+                case "exit":
+                    if (parts.length > 1) {
+                        String arg = String.join(" ", Arrays.copyOfRange(parts, 1, parts.length));
+                        if (arg.equals("0")) {
+                            running = false;
+                        }
+                    }
+                    break;
+                case "echo":
+                    if (parts.length > 1) {
+                        String arg = String.join(" ", Arrays.copyOfRange(parts, 1, parts.length));
+                        System.out.println(arg);
+                    }
+                    break;
+                case "type":
+                    if (parts.length > 1) {
+                        String term = String.join(" ", Arrays.copyOfRange(parts, 1, parts.length));
+                        if (commands.contains(term)) {
+                            System.out.printf("%s is a shell builtin%n", term);
+                        } else {
+                            String path = getPath(term);
+                            if (path == null) {
+                                System.out.printf("%s: not found%n", term);
+                            } else {
+                                System.out.printf("%s is %s%n", term, path);
+                            }
+                        }
+                    }
+                    break;
+                case "pwd":
+                    System.out.println(System.getProperty("user.dir"));
+                    break;
+                case "cd":
+                    if (parts.length > 1) {
+                        String arg = String.join(" ", Arrays.copyOfRange(parts, 1, parts.length));
+                        Path newPath;
+                        String homeDir = System.getenv("HOME");
+                        if (homeDir == null) {
+                            homeDir = System.getProperty("user.home");
+                        }
+                        if (arg.startsWith("/")) {
+                            newPath = Path.of(arg);
+                        } else if (arg.equals("~")) {
+                            newPath = Path.of(homeDir);
+                        } else if (arg.startsWith("~/")) {
+                            newPath = Path.of(homeDir, arg.substring(2));
+                        } else {
+                            newPath = currentDir.resolve(arg).normalize();
+                        }
+                        if (Files.isDirectory(newPath)) {
+                            currentDir = newPath.toAbsolutePath();
+                            System.setProperty("user.dir", currentDir.toString());
+                        } else {
+                            System.out.printf("cd: %s: No such file or directory%n", arg);
+                        }
+                    } else {
+                        System.out.println("cd: missing argument");
+                    }
+                    break;
+                default:
+                    String cmdUnquoted = cmd;
+                    if ((cmd.startsWith("\"") && cmd.endsWith("\"")) || (cmd.startsWith("'") && cmd.endsWith("'"))) {
+                        cmdUnquoted = cmd.substring(1, cmd.length() - 1);
+                    }
+                    String path = getPath(cmdUnquoted);
+                    if (path == null) {
+                        System.out.printf("%s: command not found%n", cmd);
+                    } else {
+                        parts[0] = cmdUnquoted;
+                        for (int j = 0; j < parts.length; j++) {
+                            if ((parts[j].startsWith("\"") && parts[j].endsWith("\"")) ||
+                                (parts[j].startsWith("'") && parts[j].endsWith("'"))) {
+                                parts[j] = parts[j].substring(1, parts[j].length() - 1);
+                            }
+                        }
+                        ProcessBuilder pb = new ProcessBuilder(parts);
+                        if (redirectFile != null) {
+                            pb.redirectErrorStream(true);
+                            Process p = pb.start();
+                            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                            p.getInputStream().transferTo(baos);
+                            p.waitFor();
+                            Files.write(Path.of(redirectFile), baos.toByteArray());
+                        } else {
+                            Process p = pb.start();
+                            p.waitFor();
+                            p.getInputStream().transferTo(System.out);
+                        }
+                    }
+                    break;
+            }
+            if (oldOut != null) {
+                System.out.flush();
+                System.setOut(oldOut);
+            }
         }
+        sc.close();
     }
-
-    public static void main(String[] args) throws Exception {
-        ShellContext ctx = new ShellContext();
-        ctx.cmdProc.add(new exit());
-        ctx.cmdProc.add(new echo());
-        ctx.cmdProc.add(new type());
-        ctx.cmdProc.add(new pwd());
-        ctx.cmdProc.add(new cd());
-        String pathStr = System.getenv("PATH");
-        ctx.loadPath(pathStr);
-        BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-        while (!ctx.exitCondition.get()) {
-            System.out.print("$ ");
-            String line = reader.readLine();
-            if (line == null || line.trim().isEmpty())
-                continue;
-            List<String> tokens = tokenize(line);
-            String[] argv = tokens.toArray(new String[0]);
-            ctx.cmdProc.process(ctx, argv);
+    private static String getPath(String command) {
+        Path cmdPath = Path.of(command);
+        if ((cmdPath.isAbsolute() || command.contains("/")) && Files.isRegularFile(cmdPath) && Files.isExecutable(cmdPath)) {
+            return cmdPath.toString();
         }
+        for (String path : System.getenv("PATH").split(":")) {
+            Path fullPath = Path.of(path, command);
+            if (Files.exists(fullPath) && Files.isExecutable(fullPath)) {
+                return fullPath.toString();
+            }
+        }
+        Path cwdPath = Path.of(System.getProperty("user.dir")).resolve(command);
+        if (Files.exists(cwdPath) && Files.isExecutable(cwdPath)) {
+            return cwdPath.toAbsolutePath().toString();
+        }
+        return null;
     }
 }
