@@ -1,7 +1,6 @@
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
-import java.io.ByteArrayOutputStream;
 import java.nio.file.*;
 import java.util.*;
 import java.nio.file.Files;
@@ -246,11 +245,9 @@ public class Main {
                         ProcessBuilder pb = new ProcessBuilder(parts);
                         if (redirectFile != null) {
                             pb.redirectErrorStream(true);
+                            pb.redirectOutput(new File(redirectFile));
                             Process p = pb.start();
-                            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                            p.getInputStream().transferTo(baos);
                             p.waitFor();
-                            Files.write(Path.of(redirectFile), baos.toByteArray());
                         } else {
                             Process p = pb.start();
                             p.waitFor();
