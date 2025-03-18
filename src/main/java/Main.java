@@ -246,7 +246,7 @@ public class Main {
                         ProcessBuilder pb = new ProcessBuilder(parts);
                     if (redirectFile != null) {
                         pb.redirectOutput(new File(redirectFile));
-                        pb.redirectErrorStream(true);
+                        pb.redirectError(new File(redirectFile));
                     }
                     Process p = pb.start();
                     p.waitFor();
