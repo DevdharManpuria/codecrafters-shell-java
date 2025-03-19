@@ -335,6 +335,19 @@ public class Main {
                     if (matches.isEmpty()) {
                         System.out.print("\007");
                         System.out.flush();
+                    } else if (matches.size() == 1) {
+                        String match = matches.get(0);
+                        if (match.length() > current.trim().length()) {
+                            for (int i = 0; i < input.length(); i++) {
+                                System.out.print("\b \b");
+                            }
+                            input = new StringBuilder(match + " ");
+                            System.out.print(input.toString());
+                        } else {
+                            System.out.print("\007");
+                            System.out.flush();
+                        }
+                        tabCount = 0;
                     } else {
                         String lcp = longestCommonPrefix(matches);
                         if (lcp.length() > current.trim().length()) {
@@ -343,7 +356,6 @@ public class Main {
                             }
                             input = new StringBuilder(lcp);
                             System.out.print(input.toString());
-                            tabCount = 0;
                         } else {
                             if (tabCount == 1) {
                                 System.out.print("\007");
@@ -358,9 +370,9 @@ public class Main {
                                 System.out.println();
                                 System.out.print("$ " + current);
                                 System.out.flush();
-                                tabCount = 0;
                             }
                         }
+                        tabCount = 0;
                     }
                     continue;
                 }
@@ -422,7 +434,7 @@ public class Main {
     public static String autocomplete(String input) {
         List<String> matches = getMatches(input);
         if (matches.size() == 1)
-            return matches.get(0);
+            return matches.get(0) + " ";
         String lcp = longestCommonPrefix(matches);
         return lcp;
     }
