@@ -24,8 +24,8 @@ public class Main {
                 else if ("exit".startsWith(prefix))
                     candidate = "exit ";
                 if (candidate != null) {
-                    input = candidate;
                     System.out.print("\r$ " + candidate);
+                    input = candidate;
                     continue;
                 }
                 input = input.replace("\t", "");
