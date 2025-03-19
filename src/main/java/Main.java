@@ -18,9 +18,10 @@ public class Main {
         autoCompleteMap.put("exi", "exit");
         autoCompleteMap.put("exit", "exit");
     }
-
+    
     public static void main(String[] args) throws Exception {
         Set<String> commands = Set.of("echo", "exit", "type", "pwd", "cd");
+        Scanner sc = new Scanner(System.in);
         boolean running = true;
         Path currentDir = Path.of(System.getProperty("user.dir"));
         while (running) {
@@ -305,16 +306,17 @@ public class Main {
             System.setOut(oldOut);
             System.setErr(oldErr);
         }
+        sc.close();
     }
-
+    
     private static String getInput() throws IOException {
         StringBuilder input = new StringBuilder();
         while (true) {
             if (System.in.available() != 0) {
                 int key = System.in.read();
                 char charKey = (char) key;
-                if (charKey == 0x09) {
-                    String completed = autocomplete(input.toString());
+                if (charKey == 0x09) { 
+                    String completed = autocomplete(input.toString().trim());
                     for (int i = 0; i < input.length(); i++) {
                         System.out.print("\b \b");
                     }
@@ -322,7 +324,7 @@ public class Main {
                     System.out.print(input.toString());
                     continue;
                 }
-                if (charKey == 0x0A) {
+                if (charKey == 0x0A) { 
                     System.out.println();
                     break;
                 } else {
@@ -334,16 +336,17 @@ public class Main {
         }
         return input.toString();
     }
-
+    
     public static String autocomplete(String input) {
-        for (Map.Entry<String, String> entry : autoCompleteMap.entrySet()) {
-            if (entry.getKey().equals(input) || entry.getKey().startsWith(input)) {
-                return entry.getValue();
-            }
+        if(autoCompleteMap.containsKey(input))
+            return autoCompleteMap.get(input);
+        for (String key : autoCompleteMap.keySet()) {
+            if (key.startsWith(input))
+                return autoCompleteMap.get(key);
         }
         return input;
     }
-
+    
     private static String getPath(String command) {
         Path cmdPath = Path.of(command);
         if ((cmdPath.isAbsolute() || command.contains("/"))
