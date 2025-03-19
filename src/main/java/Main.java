@@ -8,7 +8,6 @@ import java.nio.file.*;
 import java.util.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
-
 @SuppressWarnings("unused")
 public class Main {
     private static final Map<String, String> autoCompleteMap = new HashMap<>();
@@ -20,15 +19,13 @@ public class Main {
         autoCompleteMap.put("exi", "exit");
         autoCompleteMap.put("exit", "exit");
     }
-    
     public static void main(String[] args) throws Exception {
         boolean interactive = (System.console() != null);
         Scanner sc = null;
-        if (!interactive) {
+        if (!interactive) 
             sc = new Scanner(System.in);
-        } else {
+        else 
             setTerminalToCharBuffer();
-        }
         Set<String> commands = Set.of("echo", "exit", "type", "pwd", "cd");
         boolean running = true;
         Path currentDir = Path.of(System.getProperty("user.dir"));
@@ -36,11 +33,10 @@ public class Main {
             System.out.print("$ ");
             System.out.flush();
             String input;
-            if (!interactive) {
+            if (!interactive)
                 input = sc.nextLine();
-            } else {
+            else
                 input = getInput();
-            }
             List<String> tokens = new ArrayList<>();
             String commandString = "";
             int i = 0;
@@ -64,12 +60,14 @@ public class Main {
                                     sb.append(next);
                                     i += 2;
                                     continue;
-                                } else {
+                                } 
+                                else {
                                     sb.append('\\');
                                     i++;
                                     continue;
                                 }
-                            } else {
+                            } 
+                            else {
                                 sb.append(input.charAt(i));
                                 i++;
                             }
@@ -80,17 +78,19 @@ public class Main {
                         sb.setLength(0);
                         lastQuoted = true;
                         continue;
-                    } else {
+                    } 
+                    else {
                         while (i < input.length() && !Character.isWhitespace(input.charAt(i))) {
                             if (input.charAt(i) == '\\') {
                                 i++;
                                 if (i < input.length()) {
                                     sb.append(input.charAt(i));
                                     i++;
-                                } else {
+                                } 
+                                else 
                                     sb.append('\\');
-                                }
-                            } else {
+                            } 
+                            else {
                                 sb.append(input.charAt(i));
                                 i++;
                             }
@@ -112,13 +112,14 @@ public class Main {
                     if (lastQuoted && !tokens.isEmpty()) {
                         int lastIndex = tokens.size() - 1;
                         tokens.set(lastIndex, tokens.get(lastIndex) + sb.toString());
-                    } else {
+                    } 
+                    else 
                         tokens.add(sb.toString());
-                    }
                     sb.setLength(0);
                     lastQuoted = true;
                     continue;
-                } else if (input.charAt(i) == '\"') {
+                } 
+                else if (input.charAt(i) == '\"') {
                     i++;
                     while (i < input.length() && input.charAt(i) != '\"') {
                         if (input.charAt(i) == '\\' && i + 1 < input.length()) {
@@ -127,12 +128,14 @@ public class Main {
                                 sb.append(next);
                                 i += 2;
                                 continue;
-                            } else {
+                            } 
+                            else {
                                 sb.append('\\');
                                 i++;
                                 continue;
                             }
-                        } else {
+                        } 
+                        else {
                             sb.append(input.charAt(i));
                             i++;
                         }
@@ -141,9 +144,9 @@ public class Main {
                     if (lastQuoted && !tokens.isEmpty()) {
                         int lastIndex = tokens.size() - 1;
                         tokens.set(lastIndex, tokens.get(lastIndex) + sb.toString());
-                    } else {
+                    } 
+                    else 
                         tokens.add(sb.toString());
-                    }
                     sb.setLength(0);
                     lastQuoted = true;
                     continue;
@@ -154,10 +157,11 @@ public class Main {
                         if (i < input.length()) {
                             sb.append(input.charAt(i));
                             i++;
-                        } else {
+                        } 
+                        else 
                             sb.append('\\');
-                        }
-                    } else {
+                    } 
+                    else {
                         sb.append(input.charAt(i));
                         i++;
                     }
@@ -165,9 +169,9 @@ public class Main {
                 if (lastQuoted && !tokens.isEmpty()) {
                     int lastIndex = tokens.size() - 1;
                     tokens.set(lastIndex, tokens.get(lastIndex) + sb.toString());
-                } else {
+                } 
+                else 
                     tokens.add(sb.toString());
-                }
                 sb.setLength(0);
                 lastQuoted = true;
             }
@@ -183,26 +187,29 @@ public class Main {
                         redirectStdoutFile = tokens.get(j + 1);
                         j++;
                     }
-                } else if (token.equals(">>") || token.equals("1>>")) {
+                } 
+                else if (token.equals(">>") || token.equals("1>>")) {
                     if (j + 1 < tokens.size()) {
                         redirectStdoutFile = tokens.get(j + 1);
                         appendStdout = true;
                         j++;
                     }
-                } else if (token.equals("2>>")) {
+                } 
+                else if (token.equals("2>>")) {
                     if (j + 1 < tokens.size()) {
                         redirectStderrFile = tokens.get(j + 1);
                         appendStderr = true;
                         j++;
                     }
-                } else if (token.equals("2>")) {
+                } 
+                else if (token.equals("2>")) {
                     if (j + 1 < tokens.size()) {
                         redirectStderrFile = tokens.get(j + 1);
                         j++;
                     }
-                } else {
+                } 
+                else 
                     newTokens.add(token);
-                }
             }
             tokens = newTokens;
             String[] parts = tokens.toArray(new String[0]);
@@ -269,9 +276,11 @@ public class Main {
                         if (Files.isDirectory(newPath)) {
                             currentDir = newPath.toAbsolutePath();
                             System.setProperty("user.dir", currentDir.toString());
-                        } else
+                        } 
+                        else
                             System.out.printf("cd: %s: No such file or directory%n", arg);
-                    } else
+                    } 
+                    else
                         System.out.println("cd: missing argument");
                     break;
                 default:
@@ -320,7 +329,6 @@ public class Main {
             sc.close();
         }
     }
-    
     private static String getInput() throws IOException {
         StringBuilder input = new StringBuilder();
         int tabCount = 0;
@@ -335,28 +343,30 @@ public class Main {
                     if (matches.isEmpty()) {
                         System.out.print("\007");
                         System.out.flush();
-                    } else if (matches.size() == 1) {
+                    } 
+                    else if (matches.size() == 1) {
                         String match = matches.get(0);
-                        for (int i = 0; i < input.length(); i++) {
+                        for (int i = 0; i < input.length(); i++) 
                             System.out.print("\b \b");
-                        }
                         input = new StringBuilder(match + " ");
                         System.out.print(input.toString());
                         tabCount = 0;
-                    } else {
+                    } 
+                    else {
                         String lcp = longestCommonPrefix(matches);
                         if (lcp.length() > current.trim().length()) {
-                            for (int i = 0; i < input.length(); i++) {
+                            for (int i = 0; i < input.length(); i++) 
                                 System.out.print("\b \b");
-                            }
                             input = new StringBuilder(lcp);
                             System.out.print(input.toString());
                             tabCount = 0;
-                        } else {
+                        } 
+                        else {
                             if (tabCount == 1) {
                                 System.out.print("\007");
                                 System.out.flush();
-                            } else {
+                            } 
+                            else {
                                 System.out.println();
                                 for (int i = 0; i < matches.size(); i++) {
                                     System.out.print(matches.get(i));
@@ -376,7 +386,8 @@ public class Main {
                 if (charKey == 0x0A) {
                     System.out.println();
                     break;
-                } else {
+                } 
+                else {
                     input.append(charKey);
                     System.out.print(charKey);
                     System.out.flush();
@@ -385,7 +396,6 @@ public class Main {
         }
         return input.toString();
     }
-    
     private static List<String> getMatches(String prefix) {
         List<String> results = new ArrayList<>();
         for (String key : autoCompleteMap.keySet()) {
@@ -414,7 +424,6 @@ public class Main {
         Collections.sort(results);
         return results;
     }
-    
     private static String longestCommonPrefix(List<String> strs) {
         if (strs == null || strs.isEmpty()) return "";
         String prefix = strs.get(0);
@@ -426,7 +435,6 @@ public class Main {
         }
         return prefix;
     }
-    
     public static String autocomplete(String input) {
         List<String> matches = getMatches(input);
         if (matches.size() == 1)
@@ -434,7 +442,6 @@ public class Main {
         String lcp = longestCommonPrefix(matches);
         return lcp;
     }
-    
     private static String getPath(String command) {
         Path cmdPath = Path.of(command);
         if ((cmdPath.isAbsolute() || command.contains("/"))
@@ -452,30 +459,25 @@ public class Main {
             return cwdPath.toAbsolutePath().toString();
         return null;
     }
-    
     private static void setTerminalToCharBuffer() throws IOException, InterruptedException {
         stty("-g");
         stty("-icanon min 1");
         stty("-echo");
     }
-    
     private static String stty(final String args) throws IOException, InterruptedException {
         String cmd = "stty " + args + " < /dev/tty";
         return exec(new String[] {"sh", "-c", cmd});
     }
-    
     private static String exec(final String[] cmd) throws IOException, InterruptedException {
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
         Process p = Runtime.getRuntime().exec(cmd);
         int c;
         InputStream in = p.getInputStream();
-        while ((c = in.read()) != -1) {
+        while ((c = in.read()) != -1) 
             bout.write(c);
-        }
         in = p.getErrorStream();
-        while ((c = in.read()) != -1) {
+        while ((c = in.read()) != -1) 
             bout.write(c);
-        }
         p.waitFor();
         return new String(bout.toByteArray());
     }
