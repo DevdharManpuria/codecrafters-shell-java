@@ -323,25 +323,45 @@ public class Main {
     
     private static String getInput() throws IOException {
         StringBuilder input = new StringBuilder();
+        int tabCount = 0;
         while (true) {
             if (System.in.available() != 0) {
                 int key = System.in.read();
                 char charKey = (char) key;
                 if (charKey == 0x09) {
+                    tabCount++;
                     String current = input.toString().trim();
-                    String completed = autocomplete(current);
-                    if (completed.equals(current)) {
+                    List<String> matches = getMatches(current);
+                    if (matches.isEmpty()) {
                         System.out.print("\007");
                         System.out.flush();
-                    } else {
+                    } else if (matches.size() == 1) {
                         for (int i = 0; i < input.length(); i++) {
                             System.out.print("\b \b");
                         }
-                        input = new StringBuilder(completed + " ");
+                        input = new StringBuilder(matches.get(0) + " ");
                         System.out.print(input.toString());
+                        tabCount = 0;
+                    } else {
+                        if (tabCount == 1) {
+                            System.out.print("\007");
+                            System.out.flush();
+                        } else if (tabCount >= 2) {
+                            System.out.println();
+                            for (int i = 0; i < matches.size(); i++) {
+                                System.out.print(matches.get(i));
+                                if (i < matches.size() - 1)
+                                    System.out.print("  ");
+                            }
+                            System.out.println();
+                            System.out.print("$ " + current);
+                            input = new StringBuilder(current);
+                            tabCount = 0;
+                        }
                     }
                     continue;
                 }
+                tabCount = 0;
                 if (charKey == 0x0A) {
                     System.out.println();
                     break;
@@ -355,12 +375,14 @@ public class Main {
         return input.toString();
     }
     
-    public static String autocomplete(String input) {
-        if(autoCompleteMap.containsKey(input))
-            return autoCompleteMap.get(input);
+    private static List<String> getMatches(String prefix) {
+        List<String> results = new ArrayList<>();
         for (String key : autoCompleteMap.keySet()) {
-            if (key.startsWith(input))
-                return autoCompleteMap.get(key);
+            if (key.startsWith(prefix)) {
+                String comp = autoCompleteMap.get(key);
+                if (!results.contains(comp))
+                    results.add(comp);
+            }
         }
         String pathEnv = System.getenv("PATH");
         if (pathEnv != null) {
@@ -370,14 +392,25 @@ public class Main {
                 if (dir.exists() && dir.isDirectory()) {
                     File[] files = dir.listFiles();
                     if (files != null) {
-                        for (File file : files) {
-                            if (file.isFile() && file.canExecute() && file.getName().startsWith(input))
-                                return file.getName();
+                        for (File f : files) {
+                            if (f.isFile() && f.canExecute()) {
+                                String name = f.getName();
+                                if (name.startsWith(prefix) && !results.contains(name))
+                                    results.add(name);
+                            }
                         }
                     }
                 }
             }
         }
+        Collections.sort(results);
+        return results;
+    }
+    
+    public static String autocomplete(String input) {
+        List<String> matches = getMatches(input);
+        if (matches.size() == 1)
+            return matches.get(0);
         return input;
     }
     
