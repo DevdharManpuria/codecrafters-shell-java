@@ -34,6 +34,7 @@ public class Main {
         Path currentDir = Path.of(System.getProperty("user.dir"));
         while (running) {
             System.out.print("$ ");
+            System.out.flush();
             String input;
             if (!interactive) {
                 input = sc.nextLine();
