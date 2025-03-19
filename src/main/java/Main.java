@@ -1,5 +1,7 @@
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.io.PrintStream;
 import java.io.IOException;
 import java.nio.file.*;
@@ -20,13 +22,15 @@ public class Main {
     }
     
     public static void main(String[] args) throws Exception {
+        // Set terminal mode to character-buffered so we get immediate key events.
+        setTerminalToCharBuffer();
+        
         Set<String> commands = Set.of("echo", "exit", "type", "pwd", "cd");
-        Scanner sc = new Scanner(System.in);
         boolean running = true;
         Path currentDir = Path.of(System.getProperty("user.dir"));
         while (running) {
             System.out.print("$ ");
-            String input = getInput();
+            String input = getInput();  // getInput() handles TAB autocompletion
             List<String> tokens = new ArrayList<>();
             String commandString = "";
             int i = 0;
@@ -306,7 +310,6 @@ public class Main {
             System.setOut(oldOut);
             System.setErr(oldErr);
         }
-        sc.close();
     }
     
     private static String getInput() throws IOException {
@@ -315,13 +318,18 @@ public class Main {
             if (System.in.available() != 0) {
                 int key = System.in.read();
                 char charKey = (char) key;
-                if (charKey == 0x09) { 
+                if (charKey == 0x09) { // TAB key pressed
+                    // Clear the current input from the terminal
+                    int len = input.length();
+                    for (int i = 0; i < len; i++) {
+                        System.out.print("\b \b");
+                    }
                     String completed = autocomplete(input.toString().trim());
                     input = new StringBuilder(completed + " ");
-                    System.out.print("\r$ " + input.toString());
+                    System.out.print(input.toString());
                     continue;
                 }
-                if (charKey == 0x0A) { 
+                if (charKey == 0x0A) { // Enter key
                     System.out.println();
                     break;
                 } else {
@@ -335,7 +343,7 @@ public class Main {
     }
     
     public static String autocomplete(String input) {
-        if (autoCompleteMap.containsKey(input))
+        if(autoCompleteMap.containsKey(input))
             return autoCompleteMap.get(input);
         for (String key : autoCompleteMap.keySet()) {
             if (key.startsWith(input))
@@ -360,5 +368,32 @@ public class Main {
         if (Files.exists(cwdPath) && Files.isExecutable(cwdPath))
             return cwdPath.toAbsolutePath().toString();
         return null;
+    }
+    
+    private static void setTerminalToCharBuffer() throws IOException, InterruptedException {
+        stty("-g");
+        stty("-icanon min 1");
+        stty("-echo");
+    }
+    
+    private static String stty(final String args) throws IOException, InterruptedException {
+        String cmd = "stty " + args + " < /dev/tty";
+        return exec(new String[] {"sh", "-c", cmd});
+    }
+    
+    private static String exec(final String[] cmd) throws IOException, InterruptedException {
+        ByteArrayOutputStream bout = new ByteArrayOutputStream();
+        Process p = Runtime.getRuntime().exec(cmd);
+        int c;
+        InputStream in = p.getInputStream();
+        while ((c = in.read()) != -1) {
+            bout.write(c);
+        }
+        in = p.getErrorStream();
+        while ((c = in.read()) != -1) {
+            bout.write(c);
+        }
+        p.waitFor();
+        return new String(bout.toByteArray());
     }
 }
