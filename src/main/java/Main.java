@@ -15,6 +15,20 @@ public class Main {
         while (running) {
             System.out.print("$ ");
             String input = sc.nextLine();
+            if (input.contains("\t")) {
+                int tabIndex = input.indexOf("\t");
+                String prefix = input.substring(0, tabIndex);
+                String candidate = null;
+                if ("echo".startsWith(prefix))
+                    candidate = "echo ";
+                else if ("exit".startsWith(prefix))
+                    candidate = "exit ";
+                if (candidate != null) {
+                    System.out.println("\r$ " + candidate);
+                    continue;
+                }
+                input = input.replace("\t", "");
+            }
             List<String> tokens = new ArrayList<>();
             String commandString = "";
             int i = 0;
@@ -147,7 +161,7 @@ public class Main {
             String redirectStdoutFile = null;
             boolean appendStdout = false;
             String redirectStderrFile = null;
-            boolean appendStderr = false; 
+            boolean appendStderr = false;
             List<String> newTokens = new ArrayList<>();
             for (int j = 0; j < tokens.size(); j++) {
                 String token = tokens.get(j);
@@ -328,5 +342,5 @@ public class Main {
             return cwdPath.toAbsolutePath().toString();
         }
         return null;
-    }    
+    }
 }
