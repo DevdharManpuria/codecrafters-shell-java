@@ -145,6 +145,7 @@ public class Main {
                 lastQuoted = true;
             }
             String redirectStdoutFile = null;
+            boolean appendStdout = false;
             String redirectStderrFile = null;
             List<String> newTokens = new ArrayList<>();
             for (int j = 0; j < tokens.size(); j++) {
@@ -152,6 +153,12 @@ public class Main {
                 if (token.equals(">") || token.equals("1>")) {
                     if (j + 1 < tokens.size()) {
                         redirectStdoutFile = tokens.get(j + 1);
+                        j++;
+                    }
+                } else if (token.equals(">>") || token.equals("1>>")) {
+                    if (j + 1 < tokens.size()) {
+                        redirectStdoutFile = tokens.get(j + 1);
+                        appendStdout = true;
                         j++;
                     }
                 } else if (token.equals("2>")) {
@@ -171,7 +178,11 @@ public class Main {
             PrintStream oldErr = System.err;
             if (isBuiltIn) {
                 if (redirectStdoutFile != null) {
-                    System.setOut(new PrintStream(new FileOutputStream(redirectStdoutFile)));
+                    if (appendStdout) {
+                        System.setOut(new PrintStream(new FileOutputStream(redirectStdoutFile, true)));
+                    } else {
+                        System.setOut(new PrintStream(new FileOutputStream(redirectStdoutFile)));
+                    }
                 }
                 if (redirectStderrFile != null) {
                     System.setErr(new PrintStream(new FileOutputStream(redirectStderrFile)));
@@ -256,7 +267,11 @@ public class Main {
                         }
                         ProcessBuilder pb = new ProcessBuilder(parts);
                         if (redirectStdoutFile != null) {
-                            pb.redirectOutput(new File(redirectStdoutFile));
+                            if (appendStdout) {
+                                pb.redirectOutput(ProcessBuilder.Redirect.appendTo(new File(redirectStdoutFile)));
+                            } else {
+                                pb.redirectOutput(new File(redirectStdoutFile));
+                            }
                         }
                         if (redirectStderrFile != null) {
                             pb.redirectError(new File(redirectStderrFile));
