@@ -317,11 +317,8 @@ public class Main {
                 char charKey = (char) key;
                 if (charKey == 0x09) { 
                     String completed = autocomplete(input.toString().trim());
-                    for (int i = 0; i < input.length(); i++) {
-                        System.out.print("\b \b");
-                    }
                     input = new StringBuilder(completed + " ");
-                    System.out.print(input.toString());
+                    System.out.print("\r$ " + input.toString());
                     continue;
                 }
                 if (charKey == 0x0A) { 
@@ -338,7 +335,7 @@ public class Main {
     }
     
     public static String autocomplete(String input) {
-        if(autoCompleteMap.containsKey(input))
+        if (autoCompleteMap.containsKey(input))
             return autoCompleteMap.get(input);
         for (String key : autoCompleteMap.keySet()) {
             if (key.startsWith(input))
