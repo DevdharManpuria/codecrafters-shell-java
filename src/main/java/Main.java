@@ -225,11 +225,7 @@ public class Main {
             }
             switch (cmd) {
                 case "exit":
-                    if (parts.length > 1) {
-                        String arg = String.join(" ", Arrays.copyOfRange(parts, 1, parts.length));
-                        if (arg.equals("0"))
-                            running = false;
-                    }
+                    running = false;
                     break;
                 case "echo":
                     if (parts.length > 1) {
