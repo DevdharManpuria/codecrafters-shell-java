@@ -311,12 +311,15 @@ public class Main {
     }
     private static String getPath(String command) {
         Path cmdPath = Path.of(command);
-        if ((cmdPath.isAbsolute() || command.contains("/")) && Files.isRegularFile(cmdPath) && Files.isExecutable(cmdPath)) {
+        if ((cmdPath.isAbsolute() || command.contains("/"))
+                && Files.exists(cmdPath)
+                && Files.isRegularFile(cmdPath)
+                && Files.isExecutable(cmdPath)) {
             return cmdPath.toString();
         }
         for (String path : System.getenv("PATH").split(":")) {
             Path fullPath = Path.of(path, command);
-            if (Files.exists(fullPath) && Files.isExecutable(fullPath)) {
+            if (Files.exists(fullPath) && Files.isRegularFile(fullPath)) {
                 return fullPath.toString();
             }
         }
@@ -325,5 +328,5 @@ public class Main {
             return cwdPath.toAbsolutePath().toString();
         }
         return null;
-    }
+    }    
 }
