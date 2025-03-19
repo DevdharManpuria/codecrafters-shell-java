@@ -7,6 +7,15 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 @SuppressWarnings("unused")
 public class Main {
+    private static final Map<String, String> autoCompleteMap = new HashMap<>();
+    static {
+        autoCompleteMap.put("ec", "echo");
+        autoCompleteMap.put("ech", "echo");
+        autoCompleteMap.put("echo", "echo");
+        autoCompleteMap.put("ex", "exit");
+        autoCompleteMap.put("exi", "exit");
+        autoCompleteMap.put("exit", "exit");
+    }
     public static void main(String[] args) throws Exception {
         Set<String> commands = Set.of("echo", "exit", "type", "pwd", "cd");
         Scanner sc = new Scanner(System.in);
@@ -19,13 +28,15 @@ public class Main {
                 int tabIndex = input.indexOf("\t");
                 String prefix = input.substring(0, tabIndex);
                 String candidate = null;
-                if ("echo".startsWith(prefix))
-                    candidate = "echo";  
-                else if ("exit".startsWith(prefix))
-                    candidate = "exit";  
+                for (Map.Entry<String, String> entry : autoCompleteMap.entrySet()) {
+                    if (entry.getKey().startsWith(prefix)) {
+                        candidate = entry.getValue();
+                        break;
+                    }
+                }
                 if (candidate != null) {
                     System.out.print("\r$ " + candidate + " ");
-                    input = candidate + " ";  
+                    input = candidate + " ";
                     continue;
                 }
                 input = input.replace("\t", "");
