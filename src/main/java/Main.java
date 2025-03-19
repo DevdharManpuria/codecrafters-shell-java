@@ -24,7 +24,8 @@ public class Main {
                 else if ("exit".startsWith(prefix))
                     candidate = "exit ";
                 if (candidate != null) {
-                    System.out.println("\r$ " + candidate);
+                    input = candidate;
+                    System.out.print("\r$ " + candidate);
                     continue;
                 }
                 input = input.replace("\t", "");
@@ -39,7 +40,8 @@ public class Main {
                     i++;
                     lastQuoted = false;
                 }
-                if (i >= input.length()) break;
+                if (i >= input.length())
+                    break;
                 if (commandString.isEmpty()) {
                     if (input.charAt(i) == '\'' || input.charAt(i) == '\"') {
                         char quote = input.charAt(i);
@@ -61,7 +63,7 @@ public class Main {
                                 i++;
                             }
                         }
-                        i++; 
+                        i++;
                         commandString = sb.toString();
                         tokens.add(commandString);
                         sb.setLength(0);
@@ -88,7 +90,7 @@ public class Main {
                         lastQuoted = false;
                         continue;
                     }
-                }                
+                }
                 if (input.charAt(i) == '\'') {
                     i++;
                     while (i < input.length() && input.charAt(i) != '\'') {
@@ -217,9 +219,8 @@ public class Main {
                 case "exit":
                     if (parts.length > 1) {
                         String arg = String.join(" ", Arrays.copyOfRange(parts, 1, parts.length));
-                        if (arg.equals("0")) {
+                        if (arg.equals("0"))
                             running = false;
-                        }
                     }
                     break;
                 case "echo":
@@ -231,15 +232,14 @@ public class Main {
                 case "type":
                     if (parts.length > 1) {
                         String term = String.join(" ", Arrays.copyOfRange(parts, 1, parts.length));
-                        if (commands.contains(term)) {
+                        if (commands.contains(term))
                             System.out.printf("%s is a shell builtin%n", term);
-                        } else {
+                        else {
                             String path = getPath(term);
-                            if (path == null) {
+                            if (path == null)
                                 System.out.printf("%s: not found%n", term);
-                            } else {
+                            else
                                 System.out.printf("%s is %s%n", term, path);
-                            }
                         }
                     }
                     break;
@@ -251,68 +251,58 @@ public class Main {
                         String arg = String.join(" ", Arrays.copyOfRange(parts, 1, parts.length));
                         Path newPath;
                         String homeDir = System.getenv("HOME");
-                        if (homeDir == null) {
+                        if (homeDir == null)
                             homeDir = System.getProperty("user.home");
-                        }
-                        if (arg.startsWith("/")) {
+                        if (arg.startsWith("/"))
                             newPath = Path.of(arg);
-                        } else if (arg.equals("~")) {
+                        else if (arg.equals("~"))
                             newPath = Path.of(homeDir);
-                        } else if (arg.startsWith("~/")) {
+                        else if (arg.startsWith("~/"))
                             newPath = Path.of(homeDir, arg.substring(2));
-                        } else {
+                        else
                             newPath = currentDir.resolve(arg).normalize();
-                        }
                         if (Files.isDirectory(newPath)) {
                             currentDir = newPath.toAbsolutePath();
                             System.setProperty("user.dir", currentDir.toString());
-                        } else {
+                        } else
                             System.out.printf("cd: %s: No such file or directory%n", arg);
-                        }
-                    } else {
+                    } else
                         System.out.println("cd: missing argument");
-                    }
                     break;
                 default:
                     String cmdUnquoted = cmd;
                     if ((cmd.startsWith("\"") && cmd.endsWith("\"")) ||
-                        (cmd.startsWith("'") && cmd.endsWith("'"))) {
+                        (cmd.startsWith("'") && cmd.endsWith("'")))
                         cmdUnquoted = cmd.substring(1, cmd.length() - 1);
-                    }
                     String path = getPath(cmdUnquoted);
-                    if (path == null) {
+                    if (path == null)
                         System.out.printf("%s: command not found%n", cmd);
-                    } else {
+                    else {
                         parts[0] = cmdUnquoted;
                         for (int j = 0; j < parts.length; j++) {
                             if ((parts[j].startsWith("\"") && parts[j].endsWith("\"")) ||
-                                (parts[j].startsWith("'") && parts[j].endsWith("'"))) {
+                                (parts[j].startsWith("'") && parts[j].endsWith("'")))
                                 parts[j] = parts[j].substring(1, parts[j].length() - 1);
-                            }
                         }
                         ProcessBuilder pb = new ProcessBuilder(parts);
                         if (redirectStdoutFile != null) {
-                            if (appendStdout) {
+                            if (appendStdout)
                                 pb.redirectOutput(ProcessBuilder.Redirect.appendTo(new File(redirectStdoutFile)));
-                            } else {
+                            else
                                 pb.redirectOutput(new File(redirectStdoutFile));
-                            }
                         }
                         if (redirectStderrFile != null) {
-                            if (appendStderr) {
+                            if (appendStderr)
                                 pb.redirectError(ProcessBuilder.Redirect.appendTo(new File(redirectStderrFile)));
-                            } else {
+                            else
                                 pb.redirectError(new File(redirectStderrFile));
-                            }
                         }
                         Process p = pb.start();
                         p.waitFor();
-                        if (redirectStdoutFile == null) {
+                        if (redirectStdoutFile == null)
                             p.getInputStream().transferTo(System.out);
-                        }
-                        if (redirectStderrFile == null) {
+                        if (redirectStderrFile == null)
                             p.getErrorStream().transferTo(System.err);
-                        }
                     }
                     break;
             }
@@ -328,19 +318,16 @@ public class Main {
         if ((cmdPath.isAbsolute() || command.contains("/"))
                 && Files.exists(cmdPath)
                 && Files.isRegularFile(cmdPath)
-                && Files.isExecutable(cmdPath)) {
+                && Files.isExecutable(cmdPath))
             return cmdPath.toString();
-        }
         for (String path : System.getenv("PATH").split(":")) {
             Path fullPath = Path.of(path, command);
-            if (Files.exists(fullPath) && Files.isRegularFile(fullPath)) {
+            if (Files.exists(fullPath) && Files.isRegularFile(fullPath))
                 return fullPath.toString();
-            }
         }
         Path cwdPath = Path.of(System.getProperty("user.dir")).resolve(command);
-        if (Files.exists(cwdPath) && Files.isExecutable(cwdPath)) {
+        if (Files.exists(cwdPath) && Files.isExecutable(cwdPath))
             return cwdPath.toAbsolutePath().toString();
-        }
         return null;
     }
 }
