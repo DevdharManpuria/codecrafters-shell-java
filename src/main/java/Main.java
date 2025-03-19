@@ -147,6 +147,7 @@ public class Main {
             String redirectStdoutFile = null;
             boolean appendStdout = false;
             String redirectStderrFile = null;
+            boolean appendStderr = false; 
             List<String> newTokens = new ArrayList<>();
             for (int j = 0; j < tokens.size(); j++) {
                 String token = tokens.get(j);
@@ -159,6 +160,12 @@ public class Main {
                     if (j + 1 < tokens.size()) {
                         redirectStdoutFile = tokens.get(j + 1);
                         appendStdout = true;
+                        j++;
+                    }
+                } else if (token.equals("2>>")) {
+                    if (j + 1 < tokens.size()) {
+                        redirectStderrFile = tokens.get(j + 1);
+                        appendStderr = true;
                         j++;
                     }
                 } else if (token.equals("2>")) {
@@ -185,7 +192,11 @@ public class Main {
                     }
                 }
                 if (redirectStderrFile != null) {
-                    System.setErr(new PrintStream(new FileOutputStream(redirectStderrFile)));
+                    if (appendStderr) {
+                        System.setErr(new PrintStream(new FileOutputStream(redirectStderrFile, true)));
+                    } else {
+                        System.setErr(new PrintStream(new FileOutputStream(redirectStderrFile)));
+                    }
                 }
             }
             switch (cmd) {
@@ -274,7 +285,11 @@ public class Main {
                             }
                         }
                         if (redirectStderrFile != null) {
-                            pb.redirectError(new File(redirectStderrFile));
+                            if (appendStderr) {
+                                pb.redirectError(ProcessBuilder.Redirect.appendTo(new File(redirectStderrFile)));
+                            } else {
+                                pb.redirectError(new File(redirectStderrFile));
+                            }
                         }
                         Process p = pb.start();
                         p.waitFor();
