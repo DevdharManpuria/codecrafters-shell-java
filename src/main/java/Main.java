@@ -22,15 +22,24 @@ public class Main {
     }
     
     public static void main(String[] args) throws Exception {
-        // Set terminal mode to character-buffered so we get immediate key events.
-        setTerminalToCharBuffer();
-        
+        boolean interactive = (System.console() != null);
+        Scanner sc = null;
+        if (!interactive) {
+            sc = new Scanner(System.in);
+        } else {
+            setTerminalToCharBuffer();
+        }
         Set<String> commands = Set.of("echo", "exit", "type", "pwd", "cd");
         boolean running = true;
         Path currentDir = Path.of(System.getProperty("user.dir"));
         while (running) {
             System.out.print("$ ");
-            String input = getInput();  // getInput() handles TAB autocompletion
+            String input;
+            if (!interactive) {
+                input = sc.nextLine();
+            } else {
+                input = getInput();
+            }
             List<String> tokens = new ArrayList<>();
             String commandString = "";
             int i = 0;
@@ -310,6 +319,9 @@ public class Main {
             System.setOut(oldOut);
             System.setErr(oldErr);
         }
+        if (!interactive) {
+            sc.close();
+        }
     }
     
     private static String getInput() throws IOException {
@@ -318,10 +330,8 @@ public class Main {
             if (System.in.available() != 0) {
                 int key = System.in.read();
                 char charKey = (char) key;
-                if (charKey == 0x09) { // TAB key pressed
-                    // Clear the current input from the terminal
-                    int len = input.length();
-                    for (int i = 0; i < len; i++) {
+                if (charKey == 0x09) {
+                    for (int i = 0; i < input.length(); i++) {
                         System.out.print("\b \b");
                     }
                     String completed = autocomplete(input.toString().trim());
@@ -329,7 +339,7 @@ public class Main {
                     System.out.print(input.toString());
                     continue;
                 }
-                if (charKey == 0x0A) { // Enter key
+                if (charKey == 0x0A) {
                     System.out.println();
                     break;
                 } else {
