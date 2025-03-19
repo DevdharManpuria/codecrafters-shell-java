@@ -20,12 +20,12 @@ public class Main {
                 String prefix = input.substring(0, tabIndex);
                 String candidate = null;
                 if ("echo".startsWith(prefix))
-                    candidate = "echo ";
+                    candidate = "echo";  
                 else if ("exit".startsWith(prefix))
-                    candidate = "exit ";
+                    candidate = "exit";  
                 if (candidate != null) {
-                    System.out.print("\r$ " + candidate);
-                    input = candidate;
+                    System.out.print("\r$ " + candidate + " ");
+                    input = candidate + " ";  
                     continue;
                 }
                 input = input.replace("\t", "");
