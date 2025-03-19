@@ -327,12 +327,18 @@ public class Main {
                 int key = System.in.read();
                 char charKey = (char) key;
                 if (charKey == 0x09) {
-                    for (int i = 0; i < input.length(); i++) {
-                        System.out.print("\b \b");
+                    String current = input.toString().trim();
+                    String completed = autocomplete(current);
+                    if (completed.equals(current)) {
+                        System.out.print("\007");
+                        System.out.flush();
+                    } else {
+                        for (int i = 0; i < input.length(); i++) {
+                            System.out.print("\b \b");
+                        }
+                        input = new StringBuilder(completed + " ");
+                        System.out.print(input.toString());
                     }
-                    String completed = autocomplete(input.toString().trim());
-                    input = new StringBuilder(completed + " ");
-                    System.out.print(input.toString());
                     continue;
                 }
                 if (charKey == 0x0A) {
