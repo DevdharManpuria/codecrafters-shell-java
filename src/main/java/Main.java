@@ -1,10 +1,12 @@
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
+import java.io.IOException;
 import java.nio.file.*;
 import java.util.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
+
 @SuppressWarnings("unused")
 public class Main {
     private static final Map<String, String> autoCompleteMap = new HashMap<>();
@@ -16,31 +18,14 @@ public class Main {
         autoCompleteMap.put("exi", "exit");
         autoCompleteMap.put("exit", "exit");
     }
+
     public static void main(String[] args) throws Exception {
         Set<String> commands = Set.of("echo", "exit", "type", "pwd", "cd");
-        Scanner sc = new Scanner(System.in);
         boolean running = true;
         Path currentDir = Path.of(System.getProperty("user.dir"));
         while (running) {
             System.out.print("$ ");
-            String input = sc.nextLine();
-            if (input.contains("\t")) {
-                int tabIndex = input.indexOf("\t");
-                String prefix = input.substring(0, tabIndex);
-                String candidate = null;
-                for (Map.Entry<String, String> entry : autoCompleteMap.entrySet()) {
-                    if (entry.getKey().startsWith(prefix)) {
-                        candidate = entry.getValue();
-                        break;
-                    }
-                }
-                if (candidate != null) {
-                    System.out.print("\r$ " + candidate + " ");
-                    input = candidate + " ";
-                    continue;
-                }
-                input = input.replace("\t", "");
-            }
+            String input = getInput();
             List<String> tokens = new ArrayList<>();
             String commandString = "";
             int i = 0;
@@ -212,18 +197,16 @@ public class Main {
             PrintStream oldErr = System.err;
             if (isBuiltIn) {
                 if (redirectStdoutFile != null) {
-                    if (appendStdout) {
+                    if (appendStdout)
                         System.setOut(new PrintStream(new FileOutputStream(redirectStdoutFile, true)));
-                    } else {
+                    else
                         System.setOut(new PrintStream(new FileOutputStream(redirectStdoutFile)));
-                    }
                 }
                 if (redirectStderrFile != null) {
-                    if (appendStderr) {
+                    if (appendStderr)
                         System.setErr(new PrintStream(new FileOutputStream(redirectStderrFile, true)));
-                    } else {
+                    else
                         System.setErr(new PrintStream(new FileOutputStream(redirectStderrFile)));
-                    }
                 }
             }
             switch (cmd) {
@@ -322,8 +305,45 @@ public class Main {
             System.setOut(oldOut);
             System.setErr(oldErr);
         }
-        sc.close();
     }
+
+    private static String getInput() throws IOException {
+        StringBuilder input = new StringBuilder();
+        while (true) {
+            if (System.in.available() != 0) {
+                int key = System.in.read();
+                char charKey = (char) key;
+                if (charKey == 0x09) {
+                    String completed = autocomplete(input.toString());
+                    for (int i = 0; i < input.length(); i++) {
+                        System.out.print("\b \b");
+                    }
+                    input = new StringBuilder(completed + " ");
+                    System.out.print(input.toString());
+                    continue;
+                }
+                if (charKey == 0x0A) {
+                    System.out.println();
+                    break;
+                } else {
+                    input.append(charKey);
+                    System.out.print(charKey);
+                    System.out.flush();
+                }
+            }
+        }
+        return input.toString();
+    }
+
+    public static String autocomplete(String input) {
+        for (Map.Entry<String, String> entry : autoCompleteMap.entrySet()) {
+            if (entry.getKey().equals(input) || entry.getKey().startsWith(input)) {
+                return entry.getValue();
+            }
+        }
+        return input;
+    }
+
     private static String getPath(String command) {
         Path cmdPath = Path.of(command);
         if ((cmdPath.isAbsolute() || command.contains("/"))
