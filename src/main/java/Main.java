@@ -362,6 +362,22 @@ public class Main {
             if (key.startsWith(input))
                 return autoCompleteMap.get(key);
         }
+        String pathEnv = System.getenv("PATH");
+        if (pathEnv != null) {
+            String[] paths = pathEnv.split(":");
+            for (String p : paths) {
+                File dir = new File(p);
+                if (dir.exists() && dir.isDirectory()) {
+                    File[] files = dir.listFiles();
+                    if (files != null) {
+                        for (File file : files) {
+                            if (file.isFile() && file.canExecute() && file.getName().startsWith(input))
+                                return file.getName();
+                        }
+                    }
+                }
+            }
+        }
         return input;
     }
     
