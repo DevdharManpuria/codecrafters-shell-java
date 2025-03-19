@@ -330,33 +330,36 @@ public class Main {
                 char charKey = (char) key;
                 if (charKey == 0x09) {
                     tabCount++;
-                    String current = input.toString().trim();
-                    List<String> matches = getMatches(current);
+                    String current = input.toString();
+                    List<String> matches = getMatches(current.trim());
                     if (matches.isEmpty()) {
                         System.out.print("\007");
                         System.out.flush();
-                    } else if (matches.size() == 1) {
-                        for (int i = 0; i < input.length(); i++) {
-                            System.out.print("\b \b");
-                        }
-                        input = new StringBuilder(matches.get(0) + " ");
-                        System.out.print(input.toString());
-                        tabCount = 0;
                     } else {
-                        if (tabCount == 1) {
-                            System.out.print("\007");
-                            System.out.flush();
-                        } else if (tabCount >= 2) {
-                            System.out.println();
-                            for (int i = 0; i < matches.size(); i++) {
-                                System.out.print(matches.get(i));
-                                if (i < matches.size() - 1)
-                                    System.out.print("  ");
+                        String lcp = longestCommonPrefix(matches);
+                        if (lcp.length() > current.trim().length()) {
+                            for (int i = 0; i < input.length(); i++) {
+                                System.out.print("\b \b");
                             }
-                            System.out.println();
-                            System.out.print("$ " + current);
-                            input = new StringBuilder(current);
+                            input = new StringBuilder(lcp);
+                            System.out.print(input.toString());
                             tabCount = 0;
+                        } else {
+                            if (tabCount == 1) {
+                                System.out.print("\007");
+                                System.out.flush();
+                            } else {
+                                System.out.println();
+                                for (int i = 0; i < matches.size(); i++) {
+                                    System.out.print(matches.get(i));
+                                    if (i < matches.size() - 1)
+                                        System.out.print("  ");
+                                }
+                                System.out.println();
+                                System.out.print("$ " + current);
+                                System.out.flush();
+                                tabCount = 0;
+                            }
                         }
                     }
                     continue;
@@ -392,12 +395,9 @@ public class Main {
                 if (dir.exists() && dir.isDirectory()) {
                     File[] files = dir.listFiles();
                     if (files != null) {
-                        for (File f : files) {
-                            if (f.isFile() && f.canExecute()) {
-                                String name = f.getName();
-                                if (name.startsWith(prefix) && !results.contains(name))
-                                    results.add(name);
-                            }
+                        for (File file : files) {
+                            if (file.isFile() && file.canExecute() && file.getName().startsWith(prefix) && !results.contains(file.getName()))
+                                results.add(file.getName());
                         }
                     }
                 }
@@ -407,11 +407,24 @@ public class Main {
         return results;
     }
     
+    private static String longestCommonPrefix(List<String> strs) {
+        if (strs == null || strs.isEmpty()) return "";
+        String prefix = strs.get(0);
+        for (int i = 1; i < strs.size(); i++) {
+            while (strs.get(i).indexOf(prefix) != 0) {
+                prefix = prefix.substring(0, prefix.length() - 1);
+                if (prefix.isEmpty()) return "";
+            }
+        }
+        return prefix;
+    }
+    
     public static String autocomplete(String input) {
         List<String> matches = getMatches(input);
         if (matches.size() == 1)
             return matches.get(0);
-        return input;
+        String lcp = longestCommonPrefix(matches);
+        return lcp;
     }
     
     private static String getPath(String command) {
