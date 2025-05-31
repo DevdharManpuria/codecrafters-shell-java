@@ -156,8 +156,10 @@ public class Main {
                 
                 case "echo" -> {
                     if (parts.length > 1) {
-                        String arg = String.join(" ", Arrays.copyOfRange(parts, 1, parts.length));
-                        System.out.println(arg);
+                        String[] echoArgs = Arrays.copyOfRange(parts, 1, parts.length);
+                        for (int i = 0; i < echoArgs.length; i++)
+                            echoArgs[i] = unquoteString(echoArgs[i]);
+                        System.out.println(String.join(" ", echoArgs));
                     }
                 }
                 
