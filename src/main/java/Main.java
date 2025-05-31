@@ -81,23 +81,26 @@ public class Main {
                         inQuotes = true;
                         quoteChar = c;
                     }
-                    else if (c == quoteChar)
+                    else if (c == quoteChar) {
                         inQuotes = false;
-                    else
-                        currentToken.append(c);
+                        continue;
+                    }
+                    currentToken.append(c);
                     continue;
                 }
                 
-                // Handle escape sequences
-                if (c == '\\' && i + 1 < input.length()) {
-                    char next = input.charAt(i + 1);
-                    if (next == '\\' || next == '$' || next == '\"' || next == '\n') {
-                        currentToken.append(next);
-                        i++;
-                        continue;
+                if (c == '\\') {
+                    if (i + 1 < input.length()) {
+                        char next = input.charAt(i + 1);
+                        if (next == '\\' || next == '$' || next == '\"' || next == '\'' || next == '\n') {
+                            currentToken.append(next);
+                            i++;
+                            continue;
+                        }
                     }
+                    currentToken.append(c);
+                    continue;
                 }
-                currentToken.append(c);
             }
             
             if (currentToken.length() > 0)
