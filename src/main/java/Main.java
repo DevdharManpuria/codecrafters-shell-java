@@ -20,6 +20,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 
+@SuppressWarnings("unused")
 public class Main {
     // Map for command autocompletion
     private static final Map<String, String> autoCompleteMap = new HashMap<>();
