@@ -102,6 +102,7 @@ public class Main {
                     currentToken.append(c);
                     continue;
                 }
+                currentToken.append(c);
             }
             
             if (currentToken.length() > 0)
