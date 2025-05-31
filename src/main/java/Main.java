@@ -482,3 +482,4 @@ public class Main {
         return new String(bout.toByteArray());
     }
 }
+// This is a simple shell implementation in Java that supports basic command execution
