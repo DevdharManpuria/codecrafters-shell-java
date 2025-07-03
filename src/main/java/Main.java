@@ -1,13 +1,6 @@
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.io.PrintStream;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.*;
 import java.util.*;
-import java.nio.file.Files;
-import java.nio.file.Path;
 @SuppressWarnings("unused")
 public class Main {
     private static final Map<String, String> autoCompleteMap = new HashMap<>();
